@@ -14,7 +14,7 @@ window.onload = () => {
 
         // Hardcoded places data
         const places = [
-            { name: "Landmark 1", latitude: currentLatitude, longitude: currentLongitude, image: 'assets/cube-logo-100.png' }, // Example coordinates (San Francisco)
+            { name: "Landmark 1", latitude: currentLatitude + 0.001, longitude: currentLongitude + 0.001, image: 'assets/cube-logo-100.png' }
         ];
 
         console.log(places)
