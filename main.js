@@ -14,7 +14,7 @@ window.onload = () => {
 
         // Hardcoded places data
         const places = [
-            { name: "Landmark 1", latitude: currentLatitude + 0.001, longitude: currentLongitude + 0.001, image: 'assets/cube-logo-100.png' }
+            { name: "Landmark 1", latitude: currentLatitude + 0.0001, longitude: currentLongitude + 0.0001, image: 'assets/cube-logo-100.png' }
         ];
 
         console.log(places)
@@ -24,7 +24,8 @@ window.onload = () => {
             const placeImage = document.createElement('a-image');
             placeImage.setAttribute('gps-entity-place', `latitude: ${place.latitude}; longitude: ${place.longitude};`);
             placeImage.setAttribute('src', place.image); // Use the custom PNG image
-            placeImage.setAttribute('scale', '1 1 1'); // Scale the image as needed
+            placeImage.setAttribute('scale', '5 5 5'); // Increase the scale for visibility
+            placeImage.setAttribute('position', '0 2 0'); // Raise the marker 2 meters above the ground
             placeImage.setAttribute('cursor', ''); // Enable cursor interaction
 
             // Event listener for clicking the marker
