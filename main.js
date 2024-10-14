@@ -1,14 +1,11 @@
 window.onload = () => {
-    // if you want to statically add places, de-comment the following line
     const method = 'static';
 
     if (method === 'static') {
-        // Get the user's current location first
         navigator.geolocation.getCurrentPosition((position) => {
             const currentLatitude = position.coords.latitude;
             const currentLongitude = position.coords.longitude;
 
-            // Now load the static places using the current location
             let places = staticLoadPlaces(currentLatitude, currentLongitude);
             renderPlaces(places);
         }, (err) => {
@@ -26,15 +23,15 @@ function staticLoadPlaces(currentLatitude, currentLongitude) {
         {
             name: "Location 1",
             location: {
-                lat: currentLatitude + 0.001, // Example offset
-                lng: currentLongitude + 0.001, // Example offset
+                lat: currentLatitude + 0.001,
+                lng: currentLongitude + 0.001,
             }
         },
         {
             name: 'Location 2',
             location: {
-                lat: currentLatitude + 0.002, // Example offset
-                lng: currentLongitude + 0.002, // Example offset
+                lat: currentLatitude + 0.002,
+                lng: currentLongitude + 0.002,
             }
         }
     ];
@@ -47,29 +44,26 @@ function renderPlaces(places) {
         const latitude = place.location.lat;
         const longitude = place.location.lng;
 
-        // Add place icon
         const icon = document.createElement('a-image');
         icon.setAttribute('gps-entity-place', `latitude: ${latitude}; longitude: ${longitude}`);
         icon.setAttribute('name', place.name);
-        icon.setAttribute('src', '../assets/map-marker.png'); // Update path as necessary
-
-        // Scale for better visibility
+        icon.setAttribute('src', '../assets/map-marker.png');
         icon.setAttribute('scale', '20, 20');
+        icon.setAttribute('class', 'clickable');
 
-        icon.addEventListener('loaded', () => window.dispatchEvent(new CustomEvent('gps-entity-place-loaded')));
+        icon.addEventListener('loaded', () => {
+            window.dispatchEvent(new CustomEvent('gps-entity-place-loaded'));
 
-        // Click event listener
-        const clickListener = (ev) => {
-            console.log(ev.detail)
+            icon.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                ev.preventDefault();
+                const name = icon.getAttribute('name');
+                console.log("Clicked on:", name);
 
-            ev.stopPropagation();
-            ev.preventDefault();
+                // Show an alert when the marker is clicked
+                alert(`You clicked on ${name}`);
 
-            const name = ev.target.getAttribute('name');
-            const el = ev.detail.intersection && ev.detail.intersection.object.el;
-
-            if (el && el === ev.target) {
-                alert("Here")
+                // Create and show the label
                 const label = document.createElement('span');
                 const container = document.createElement('div');
                 container.setAttribute('id', 'place-label');
@@ -81,10 +75,8 @@ function renderPlaces(places) {
                 setTimeout(() => {
                     container.parentElement.removeChild(container);
                 }, 1500);
-            }
-        };
-
-        icon.addEventListener('click', clickListener);
+            });
+        });
         scene.appendChild(icon);
     });
 }
