@@ -55,9 +55,9 @@ window.onload = () => {
             // Create a visible hitbox
             const hitbox = document.createElement('a-box');
             hitbox.setAttribute('class', 'clickable');
-            hitbox.setAttribute('material', 'color: red; opacity: 0.1');
-            hitbox.setAttribute('scale', '1 1 0');
-            hitbox.setAttribute('position', '0 0 -0.05');
+            hitbox.setAttribute('material', 'color: transparent; opacity: 0.0');  // Fully invisible but clickable
+            hitbox.setAttribute('scale', '1.5 1.5 0.1');  // Slightly larger to ensure full coverage
+            hitbox.setAttribute('position', '0 0 0');  // Align with the logo's position
             placeEntity.appendChild(hitbox);
 
             // Add click listener to the entity
