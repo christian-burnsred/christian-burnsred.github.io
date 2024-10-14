@@ -1,11 +1,6 @@
 window.onload = () => {
     const scene = document.querySelector('a-scene');
 
-    // Add cursor entity for raycasting
-    // const cursor = document.createElement('a-entity');
-    // cursor.setAttribute('cursor', 'rayOrigin: mouse; fuse: false;');
-    // cursor.setAttribute('raycaster', 'objects: .clickable');
-    // scene.camera.el.appendChild(cursor);
     const cursor = document.createElement('a-entity');
     cursor.setAttribute('cursor', 'rayOrigin: mouse; fuse: false;');
     cursor.setAttribute('raycaster', 'objects: a-box, a-image');
@@ -19,21 +14,16 @@ window.onload = () => {
         const currentLatitude = position.coords.latitude;
         const currentLongitude = position.coords.longitude;
 
-        console.log('Current Location:', {
-            latitude: currentLatitude,
-            longitude: currentLongitude
-        });
-
         const places = [
             {
-                name: "Landmark 1",
+                name: "Equipment",
+                description: "Eqipment Description",
                 latitude: currentLatitude + 0.0001,
                 longitude: currentLongitude + 0.0001,
-                image: 'assets/cube-logo-100.png'
+                image: 'assets/cube-logo-100.png',
+                infoUrl: "http://bhp-qr-code-evolve-platform-prototype1.burnsred.com.au/"
             }
         ];
-
-        // console.log('Places to render:', places);
 
         places.forEach((place, index) => {
             const placeEntity = document.createElement('a-entity');
@@ -43,78 +33,90 @@ window.onload = () => {
             placeEntity.setAttribute('class', 'clickable');
             placeEntity.setAttribute('id', `place-${index}`);
 
-            // console.log(`Creating place entity: ${place.name}`);
-
             const placeImage = document.createElement('a-image');
             placeImage.setAttribute('src', place.image);
             placeImage.setAttribute('scale', '1 1 1');
-            placeImage.setAttribute('position', '0 0 0'); // Center the image
-            placeEntity.setAttribute('class', 'clickable');
+            placeImage.setAttribute('position', '0 0 0');
             placeEntity.appendChild(placeImage);
 
-            // Create a visible hitbox
+            // Invisible hitbox for better click detection
             const hitbox = document.createElement('a-box');
             hitbox.setAttribute('class', 'clickable');
-            hitbox.setAttribute('material', 'color: transparent; opacity: 0.0');  // Fully invisible but clickable
-            hitbox.setAttribute('scale', '1.5 1.5 0.1');  // Slightly larger to ensure full coverage
-            hitbox.setAttribute('position', '0 0 0');  // Align with the logo's position
+            hitbox.setAttribute('material', 'color: transparent; opacity: 0.0');
+            hitbox.setAttribute('scale', '1.5 1.5 0.1');
+            hitbox.setAttribute('position', '0 0 0');
             placeEntity.appendChild(hitbox);
 
-            // Add click listener to the entity
-            placeEntity.addEventListener('click', function (event) {
-                console.log(`Clicked on ${place.name}`, event);
-                alert(`You clicked on ${place.name}`);
-                updateDebugText(`Clicked: ${place.name}`);
-            });
-
-            // Mouse enter and leave events for visual feedback
-            placeEntity.addEventListener('mouseenter', function () {
-                console.log(`Mouse entered ${place.name}`);
-                // hitbox.setAttribute('material', 'opacity', '0.5');
-                updateDebugText(`Mouse entered: ${place.name}`);
-            });
-            placeEntity.addEventListener('mouseleave', function () {
-                console.log(`Mouse left ${place.name}`);
-                // hitbox.setAttribute('material', 'opacity', '0.3');
-                updateDebugText(`Mouse left: ${place.name}`);
-            });
-
-            placeEntity.addEventListener('loaded', () => {
-                console.log(`Marker loaded: ${place.name}`);
-                updateDebugText(`Marker loaded: ${place.name}`);
-                window.dispatchEvent(new CustomEvent('gps-entity-place-loaded'));
+            // Add click listener
+            placeEntity.addEventListener('click', function () {
+                console.log(`Clicked on ${place.name}`);
+                showModal(place);
             });
 
             scene.appendChild(placeEntity);
-            console.log(`Place entity added to scene: ${place.name}`);
         });
 
-        // Add a static debug element
-        const debugEl = document.createElement('a-text');
-        debugEl.setAttribute('value', 'Debug: Waiting for interaction');
-        debugEl.setAttribute('position', '0 -0.5 -1');
-        debugEl.setAttribute('scale', '0.5 0.5 0.5');
-        scene.camera.el.appendChild(debugEl);
+        // Function to show the modal with landmark details
+        // Function to show the modal with landmark details
+        // Function to show the modal with landmark details
+        function showModal(place) {
+            // Create a modal container
+            const modal = document.createElement('div');
+            modal.setAttribute('id', 'landmark-modal');
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.width = '100%';
+            modal.style.height = '100%';
+            modal.style.backgroundColor = 'rgba(255, 255, 255, 0.95)'; // Semi-transparent background
+            modal.style.zIndex = '9999';
+            modal.style.display = 'flex';
+            modal.style.flexDirection = 'column';
+            modal.style.alignItems = 'left';
+            modal.style.justifyContent = 'center';
+            modal.style.padding = '20px';
+            modal.style.boxSizing = 'border-box'; // Ensure padding doesn't affect overall size
 
-        // console.log('Debug element added to scene');
+            // Create an 'X' icon for closing the modal
+            const closeIcon = document.createElement('div');
+            closeIcon.innerHTML = '&times;';
+            closeIcon.style.position = 'absolute';
+            closeIcon.style.top = '20px';
+            closeIcon.style.right = '20px';
+            closeIcon.style.fontSize = '30px';
+            closeIcon.style.cursor = 'pointer';
+            closeIcon.onclick = () => {
+                document.body.removeChild(modal);
+            };
+            modal.appendChild(closeIcon);
 
-        // Function to update debug text
-        function updateDebugText(message) {
-            console.log('Debug:', message);
-            debugEl.setAttribute('value', `Debug: ${message}`);
+            // Landmark name
+            const title = document.createElement('h2');
+            title.innerText = place.name;
+            modal.appendChild(title);
+
+            // Landmark description
+            const description = document.createElement('p');
+            description.innerText = place.description;
+            modal.appendChild(description);
+
+            // Button to open URL in new tab
+            const openUrlButton = document.createElement('button');
+            openUrlButton.innerText = 'Perform CCC';
+            openUrlButton.style.marginTop = '10px';
+            openUrlButton.style.padding = '10px 20px';
+            openUrlButton.style.cursor = 'pointer';
+            openUrlButton.onclick = () => {
+                window.open(place.infoUrl, '_blank');
+            };
+            modal.appendChild(openUrlButton);
+
+            // Add modal to the body
+            document.body.appendChild(modal);
         }
-
-        // Scene-wide click listener
-        scene.addEventListener('click', function (event) {
-            console.log('Scene clicked');
-            console.log('Click event:', event);
-            console.log('Clicked element:', event.target);
-            updateDebugText(`Scene clicked: ${new Date().toLocaleTimeString()}`);
-        });
 
     }, (err) => {
         console.error('Error retrieving location', err);
-        updateDebugText(`GPS Error: ${err.message}`);
     }, {
         enableHighAccuracy: true,
         maximumAge: 0,
