@@ -1,48 +1,114 @@
 window.onload = () => {
     const scene = document.querySelector('a-scene');
 
-    // Get current user location and log it to the console
+    // Add cursor entity for raycasting
+    const cursor = document.createElement('a-entity');
+    cursor.setAttribute('cursor', 'rayOrigin: mouse; fuse: false;');
+    cursor.setAttribute('raycaster', 'objects: .clickable');
+    scene.camera.el.appendChild(cursor);
+
+    console.log('Cursor entity added to scene');
+
     navigator.geolocation.getCurrentPosition((position) => {
         const currentLatitude = position.coords.latitude;
         const currentLongitude = position.coords.longitude;
 
-        // Log the current location
         console.log('Current Location:', {
             latitude: currentLatitude,
             longitude: currentLongitude
         });
 
-        // Hardcoded places data
         const places = [
-            { name: "Landmark 1", latitude: currentLatitude + 0.0001, longitude: currentLongitude + 0.0001, image: 'assets/cube-logo-100.png' }
+            {
+                name: "Landmark 1",
+                latitude: currentLatitude + 0.0001,
+                longitude: currentLongitude + 0.0001,
+                image: 'assets/cube-logo-100.png'
+            }
         ];
 
-        console.log(places)
+        console.log('Places to render:', places);
 
-        // Add hardcoded places to the scene
-        places.forEach((place) => {
+        places.forEach((place, index) => {
+            const placeEntity = document.createElement('a-entity');
+            placeEntity.setAttribute('gps-entity-place', `latitude: ${place.latitude}; longitude: ${place.longitude};`);
+            placeEntity.setAttribute('look-at', '[gps-camera]');
+            placeEntity.setAttribute('scale', '5 5 5');
+            placeEntity.setAttribute('class', 'clickable');
+            placeEntity.setAttribute('id', `place-${index}`);
+
+            console.log(`Creating place entity: ${place.name}`);
+
+            // Create a visible hitbox
+            const hitbox = document.createElement('a-box');
+            hitbox.setAttribute('material', 'color: red; opacity: 0.3');
+            hitbox.setAttribute('scale', '1.2 1.2 0.1');
+            hitbox.setAttribute('position', '0 0 -0.05');
+            placeEntity.appendChild(hitbox);
+
             const placeImage = document.createElement('a-image');
-            placeImage.setAttribute('gps-entity-place', `latitude: ${place.latitude}; longitude: ${place.longitude};`);
-            placeImage.setAttribute('src', place.image); // Use the custom PNG image
-            placeImage.setAttribute('scale', '5 5 5'); // Increase the scale for visibility
-            placeImage.setAttribute('position', '0 2 0'); // Raise the marker 2 meters above the ground
-            placeImage.setAttribute('cursor', ''); // Enable cursor interaction
+            placeImage.setAttribute('src', place.image);
+            placeImage.setAttribute('scale', '1 1 1');
+            placeImage.setAttribute('position', '0 0 0'); // Center the image
+            placeEntity.appendChild(placeImage);
 
-            // Event listener for clicking the marker
-            placeImage.addEventListener('click', () => {
-                console.log("Click")
+            // Add click listener to the entity
+            placeEntity.addEventListener('click', function () {
+                console.log(`Clicked on ${place.name}`);
+                alert(`You clicked on ${place.name}`);
+                updateDebugText(`Clicked: ${place.name}`);
             });
 
-            // Event listener to notify when the image is loaded
-            placeImage.addEventListener('loaded', () => {
-                console.log('Marker loaded');
+            // Mouse enter and leave events for visual feedback
+            placeEntity.addEventListener('mouseenter', function () {
+                console.log(`Mouse entered ${place.name}`);
+                hitbox.setAttribute('material', 'opacity', '0.5');
+                updateDebugText(`Mouse entered: ${place.name}`);
+            });
+            placeEntity.addEventListener('mouseleave', function () {
+                console.log(`Mouse left ${place.name}`);
+                hitbox.setAttribute('material', 'opacity', '0.3');
+                updateDebugText(`Mouse left: ${place.name}`);
+            });
+
+            placeEntity.addEventListener('loaded', () => {
+                console.log(`Marker loaded: ${place.name}`);
+                updateDebugText(`Marker loaded: ${place.name}`);
                 window.dispatchEvent(new CustomEvent('gps-entity-place-loaded'));
             });
 
-            scene.appendChild(placeImage);
+            scene.appendChild(placeEntity);
+            console.log(`Place entity added to scene: ${place.name}`);
         });
+
+        // Add a static debug element
+        const debugEl = document.createElement('a-text');
+        debugEl.setAttribute('value', 'Debug: Waiting for interaction');
+        debugEl.setAttribute('position', '0 -0.5 -1');
+        debugEl.setAttribute('scale', '0.5 0.5 0.5');
+        scene.camera.el.appendChild(debugEl);
+
+        console.log('Debug element added to scene');
+
+        // Function to update debug text
+        function updateDebugText(message) {
+            console.log('Debug:', message);
+            debugEl.setAttribute('value', `Debug: ${message}`);
+        }
+
+        // Scene-wide click listener
+        scene.addEventListener('click', function (event) {
+            console.log('Scene clicked');
+            console.log('Click event:', event);
+            console.log('Clicked element:', event.target);
+            updateDebugText(`Scene clicked: ${new Date().toLocaleTimeString()}`);
+        });
+
+        console.log('Scene click listener added');
+
     }, (err) => {
         console.error('Error retrieving location', err);
+        updateDebugText(`GPS Error: ${err.message}`);
     }, {
         enableHighAccuracy: true,
         maximumAge: 0,
