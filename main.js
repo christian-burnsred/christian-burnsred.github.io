@@ -27,8 +27,8 @@ window.onload = () => {
         const places = [
             {
                 name: "Landmark 1",
-                latitude: currentLatitude + 0.0009,
-                longitude: currentLongitude + 0.0009,
+                latitude: currentLatitude + 0.001,
+                longitude: currentLongitude + 0.001,
                 image: 'assets/cube-logo-100.png'
             }
         ];
