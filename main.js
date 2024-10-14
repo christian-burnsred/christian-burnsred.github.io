@@ -3,7 +3,7 @@ window.onload = () => {
 
     const cursor = document.createElement('a-entity');
     cursor.setAttribute('cursor', 'rayOrigin: mouse; fuse: false;');
-    cursor.setAttribute('raycaster', 'objects: a-box, a-image');
+    cursor.setAttribute('raycaster', 'objects: a-box, a-gltf-model');
     cursor.setAttribute('raycaster', 'ignore: [canvas]');
     cursor.setAttribute('raycaster', 'objects: .clickable; showLine: true;');
     scene.camera.el.appendChild(cursor);
@@ -17,10 +17,10 @@ window.onload = () => {
         const places = [
             {
                 name: "Equipment",
-                description: "Eqipment Description",
+                description: "Equipment Description",
                 latitude: currentLatitude + 0.0001,
                 longitude: currentLongitude + 0.0001,
-                image: 'assets/cube-logo-100.png',
+                model: 'assets/Shiny Amberis-Amur.glb',  // Path to your 3D model
                 infoUrl: "http://bhp-qr-code-evolve-platform-prototype1.burnsred.com.au/"
             }
         ];
@@ -33,11 +33,13 @@ window.onload = () => {
             placeEntity.setAttribute('class', 'clickable');
             placeEntity.setAttribute('id', `place-${index}`);
 
-            const placeImage = document.createElement('a-image');
-            placeImage.setAttribute('src', place.image);
-            placeImage.setAttribute('scale', '1 1 1');
-            placeImage.setAttribute('position', '0 0 0');
-            placeEntity.appendChild(placeImage);
+            // 3D model that always faces the camera
+            const placeModel = document.createElement('a-gltf-model');
+            placeModel.setAttribute('src', place.model);  // Path to the 3D model
+            placeModel.setAttribute('scale', '1 1 1');    // Adjust scale as necessary
+            placeModel.setAttribute('look-at', '[gps-camera]');  // Always face the camera
+            placeModel.setAttribute('class', 'clickable');  // Ensure the model is clickable
+            placeEntity.appendChild(placeModel);
 
             // Invisible hitbox for better click detection
             const hitbox = document.createElement('a-box');
@@ -56,11 +58,7 @@ window.onload = () => {
             scene.appendChild(placeEntity);
         });
 
-        // Function to show the modal with landmark details
-        // Function to show the modal with landmark details
-        // Function to show the modal with landmark details
         function showModal(place) {
-            // Create a modal container
             const modal = document.createElement('div');
             modal.setAttribute('id', 'landmark-modal');
             modal.style.position = 'fixed';
@@ -68,16 +66,15 @@ window.onload = () => {
             modal.style.left = '0';
             modal.style.width = '100%';
             modal.style.height = '100%';
-            modal.style.backgroundColor = 'rgba(255, 255, 255, 0.95)'; // Semi-transparent background
+            modal.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
             modal.style.zIndex = '9999';
             modal.style.display = 'flex';
             modal.style.flexDirection = 'column';
             modal.style.alignItems = 'left';
             modal.style.justifyContent = 'center';
             modal.style.padding = '20px';
-            modal.style.boxSizing = 'border-box'; // Ensure padding doesn't affect overall size
+            modal.style.boxSizing = 'border-box';
 
-            // Create an 'X' icon for closing the modal
             const closeIcon = document.createElement('div');
             closeIcon.innerHTML = '&times;';
             closeIcon.style.position = 'absolute';
@@ -90,17 +87,14 @@ window.onload = () => {
             };
             modal.appendChild(closeIcon);
 
-            // Landmark name
             const title = document.createElement('h2');
             title.innerText = place.name;
             modal.appendChild(title);
 
-            // Landmark description
             const description = document.createElement('p');
             description.innerText = place.description;
             modal.appendChild(description);
 
-            // Button to open URL in new tab
             const openUrlButton = document.createElement('button');
             openUrlButton.innerText = 'Perform CCC';
             openUrlButton.style.marginTop = '10px';
@@ -111,7 +105,6 @@ window.onload = () => {
             };
             modal.appendChild(openUrlButton);
 
-            // Add modal to the body
             document.body.appendChild(modal);
         }
 
