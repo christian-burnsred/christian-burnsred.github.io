@@ -2,9 +2,15 @@ window.onload = () => {
     const scene = document.querySelector('a-scene');
 
     // Add cursor entity for raycasting
+    // const cursor = document.createElement('a-entity');
+    // cursor.setAttribute('cursor', 'rayOrigin: mouse; fuse: false;');
+    // cursor.setAttribute('raycaster', 'objects: .clickable');
+    // scene.camera.el.appendChild(cursor);
     const cursor = document.createElement('a-entity');
     cursor.setAttribute('cursor', 'rayOrigin: mouse; fuse: false;');
-    cursor.setAttribute('raycaster', 'objects: .clickable');
+    cursor.setAttribute('raycaster', 'objects: a-box, a-image');
+    cursor.setAttribute('raycaster', 'ignore: [canvas]');
+    cursor.setAttribute('raycaster', 'objects: .clickable; showLine: true;');
     scene.camera.el.appendChild(cursor);
 
     console.log('Cursor entity added to scene');
@@ -41,6 +47,7 @@ window.onload = () => {
 
             // Create a visible hitbox
             const hitbox = document.createElement('a-box');
+            hitbox.setAttribute('class', 'clickable');
             hitbox.setAttribute('material', 'color: red; opacity: 0.3');
             hitbox.setAttribute('scale', '1.2 1.2 0.1');
             hitbox.setAttribute('position', '0 0 -0.05');
@@ -50,11 +57,12 @@ window.onload = () => {
             placeImage.setAttribute('src', place.image);
             placeImage.setAttribute('scale', '1 1 1');
             placeImage.setAttribute('position', '0 0 0'); // Center the image
+            placeEntity.setAttribute('class', 'clickable');
             placeEntity.appendChild(placeImage);
 
             // Add click listener to the entity
-            placeEntity.addEventListener('click', function () {
-                console.log(`Clicked on ${place.name}`);
+            placeEntity.addEventListener('click', function (event) {
+                console.log(`Clicked on ${place.name}`, event);
                 alert(`You clicked on ${place.name}`);
                 updateDebugText(`Clicked: ${place.name}`);
             });
