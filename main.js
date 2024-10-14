@@ -39,19 +39,11 @@ window.onload = () => {
             const placeEntity = document.createElement('a-entity');
             placeEntity.setAttribute('gps-entity-place', `latitude: ${place.latitude}; longitude: ${place.longitude};`);
             placeEntity.setAttribute('look-at', '[gps-camera]');
-            placeEntity.setAttribute('scale', '5 5 5');
+            placeEntity.setAttribute('scale', '6 6 6');
             placeEntity.setAttribute('class', 'clickable');
             placeEntity.setAttribute('id', `place-${index}`);
 
             // console.log(`Creating place entity: ${place.name}`);
-
-            // Create a visible hitbox
-            const hitbox = document.createElement('a-box');
-            hitbox.setAttribute('class', 'clickable');
-            hitbox.setAttribute('material', 'color: transparent; opacity: 0.0');
-            hitbox.setAttribute('scale', '1.2 1.2 0.1');
-            hitbox.setAttribute('position', '0 0 -0.05');
-            placeEntity.appendChild(hitbox);
 
             const placeImage = document.createElement('a-image');
             placeImage.setAttribute('src', place.image);
@@ -59,6 +51,14 @@ window.onload = () => {
             placeImage.setAttribute('position', '0 0 0'); // Center the image
             placeEntity.setAttribute('class', 'clickable');
             placeEntity.appendChild(placeImage);
+
+            // Create a visible hitbox
+            const hitbox = document.createElement('a-box');
+            hitbox.setAttribute('class', 'clickable');
+            hitbox.setAttribute('material', 'color: red; opacity: 0.1');
+            hitbox.setAttribute('scale', '1 1 0');
+            hitbox.setAttribute('position', '0 0 -0.05');
+            placeEntity.appendChild(hitbox);
 
             // Add click listener to the entity
             placeEntity.addEventListener('click', function (event) {
