@@ -14,7 +14,12 @@ window.onload = () => {
 
         // Hardcoded places data
         const places = [
-            { name: "Landmark 1", latitude: currentLatitude + 0.0001, longitude: currentLongitude + 0.0001, image: 'assets/cube-logo-100.png' }
+            {
+                name: "Landmark 1",
+                latitude: currentLatitude + 0.0001,
+                longitude: currentLongitude + 0.0001,
+                image: 'assets/cube-logo-100.png'
+            }
         ];
 
         console.log(places)
@@ -24,18 +29,21 @@ window.onload = () => {
             const placeImage = document.createElement('a-image');
             placeImage.setAttribute('gps-entity-place', `latitude: ${place.latitude}; longitude: ${place.longitude};`);
             placeImage.setAttribute('src', place.image); // Use the custom PNG image
-            placeImage.setAttribute('scale', '5 5 5'); // Increase the scale for visibility
-            placeImage.setAttribute('position', '0 2 0'); // Raise the marker 2 meters above the ground
-            placeImage.setAttribute('cursor', ''); // Enable cursor interaction
+            placeImage.setAttribute('position', '0 4 0'); // Raise the marker above the ground
+            placeImage.setAttribute('scale', '2 2 2'); // Adjust the scale for visibility
+            placeImage.setAttribute('cursor', 'rayOrigin: mouse'); // Enable cursor interaction via mouse clicks
+            placeImage.setAttribute('class', 'clickable'); // Optional: Add a class to the marker for easier reference
 
-            // Event listener for clicking the marker
+            // Add click event listener for the marker
             placeImage.addEventListener('click', () => {
-                console.log("Click")
+                console.log("Marker clicked:", place.name);
+                // Add any further actions you want to trigger on click here
+                alert(`You clicked on ${place.name}`);
             });
 
-            // Event listener to notify when the image is loaded
+            // Log marker loading event
             placeImage.addEventListener('loaded', () => {
-                console.log('Marker loaded');
+                console.log('Marker loaded:', place.name);
                 window.dispatchEvent(new CustomEvent('gps-entity-place-loaded'));
             });
 
