@@ -33,7 +33,7 @@ window.onload = () => {
             }
         ];
 
-        console.log('Places to render:', places);
+        // console.log('Places to render:', places);
 
         places.forEach((place, index) => {
             const placeEntity = document.createElement('a-entity');
@@ -43,7 +43,7 @@ window.onload = () => {
             placeEntity.setAttribute('class', 'clickable');
             placeEntity.setAttribute('id', `place-${index}`);
 
-            console.log(`Creating place entity: ${place.name}`);
+            // console.log(`Creating place entity: ${place.name}`);
 
             // Create a visible hitbox
             const hitbox = document.createElement('a-box');
@@ -96,7 +96,7 @@ window.onload = () => {
         debugEl.setAttribute('scale', '0.5 0.5 0.5');
         scene.camera.el.appendChild(debugEl);
 
-        console.log('Debug element added to scene');
+        // console.log('Debug element added to scene');
 
         // Function to update debug text
         function updateDebugText(message) {
@@ -111,8 +111,6 @@ window.onload = () => {
             console.log('Clicked element:', event.target);
             updateDebugText(`Scene clicked: ${new Date().toLocaleTimeString()}`);
         });
-
-        console.log('Scene click listener added');
 
     }, (err) => {
         console.error('Error retrieving location', err);
