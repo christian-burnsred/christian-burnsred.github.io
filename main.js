@@ -27,8 +27,8 @@ window.onload = () => {
         const places = [
             {
                 name: "Landmark 1",
-                latitude: currentLatitude + 0.0001,
-                longitude: currentLongitude + 0.0001,
+                latitude: currentLatitude + 0.0009,
+                longitude: currentLongitude + 0.0009,
                 image: 'assets/cube-logo-100.png'
             }
         ];
@@ -48,7 +48,7 @@ window.onload = () => {
             // Create a visible hitbox
             const hitbox = document.createElement('a-box');
             hitbox.setAttribute('class', 'clickable');
-            hitbox.setAttribute('material', 'color: red; opacity: 0.3');
+            hitbox.setAttribute('material', 'color: transparent; opacity: 0.0');
             hitbox.setAttribute('scale', '1.2 1.2 0.1');
             hitbox.setAttribute('position', '0 0 -0.05');
             placeEntity.appendChild(hitbox);
@@ -70,12 +70,12 @@ window.onload = () => {
             // Mouse enter and leave events for visual feedback
             placeEntity.addEventListener('mouseenter', function () {
                 console.log(`Mouse entered ${place.name}`);
-                hitbox.setAttribute('material', 'opacity', '0.5');
+                // hitbox.setAttribute('material', 'opacity', '0.5');
                 updateDebugText(`Mouse entered: ${place.name}`);
             });
             placeEntity.addEventListener('mouseleave', function () {
                 console.log(`Mouse left ${place.name}`);
-                hitbox.setAttribute('material', 'opacity', '0.3');
+                // hitbox.setAttribute('material', 'opacity', '0.3');
                 updateDebugText(`Mouse left: ${place.name}`);
             });
 
