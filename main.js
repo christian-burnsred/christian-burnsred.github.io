@@ -1,59 +1,90 @@
 window.onload = () => {
-    const scene = document.querySelector('a-scene');
+    // if you want to statically add places, de-comment the following line
+    const method = 'static';
 
-    // Get current user location and log it to the console
-    navigator.geolocation.getCurrentPosition((position) => {
-        const currentLatitude = position.coords.latitude;
-        const currentLongitude = position.coords.longitude;
+    if (method === 'static') {
+        // Get the user's current location first
+        navigator.geolocation.getCurrentPosition((position) => {
+            const currentLatitude = position.coords.latitude;
+            const currentLongitude = position.coords.longitude;
 
-        // Log the current location
-        console.log('Current Location:', {
-            latitude: currentLatitude,
-            longitude: currentLongitude
+            // Now load the static places using the current location
+            let places = staticLoadPlaces(currentLatitude, currentLongitude);
+            renderPlaces(places);
+        }, (err) => {
+            console.error('Error in retrieving position', err);
+        }, {
+            enableHighAccuracy: true,
+            maximumAge: 0,
+            timeout: 27000,
         });
-
-        // Hardcoded places data
-        const places = [
-            {
-                name: "Landmark 1",
-                latitude: currentLatitude + 0.1,
-                longitude: currentLongitude + 0.1,
-                image: 'assets/cube-logo-100.png'
-            }
-        ];
-
-        console.log(places)
-
-        // Add hardcoded places to the scene
-        places.forEach((place) => {
-            const placeImage = document.createElement('a-image');
-            placeImage.setAttribute('gps-entity-place', `latitude: ${place.latitude}; longitude: ${place.longitude};`);
-            placeImage.setAttribute('src', place.image); // Use the custom PNG image
-            placeImage.setAttribute('position', '0 4 0'); // Raise the marker above the ground
-            placeImage.setAttribute('scale', '2 2 2'); // Adjust the scale for visibility
-            placeImage.setAttribute('cursor', 'rayOrigin: mouse'); // Enable cursor interaction via mouse clicks
-            placeImage.setAttribute('class', 'clickable'); // Optional: Add a class to the marker for easier reference
-
-            // Add click event listener for the marker
-            placeImage.addEventListener('click', () => {
-                console.log("Marker clicked:", place.name);
-                // Add any further actions you want to trigger on click here
-                alert(`You clicked on ${place.name}`);
-            });
-
-            // Log marker loading event
-            placeImage.addEventListener('loaded', () => {
-                console.log('Marker loaded:', place.name);
-                window.dispatchEvent(new CustomEvent('gps-entity-place-loaded'));
-            });
-
-            scene.appendChild(placeImage);
-        });
-    }, (err) => {
-        console.error('Error retrieving location', err);
-    }, {
-        enableHighAccuracy: true,
-        maximumAge: 0,
-        timeout: 27000,
-    });
+    }
 };
+
+function staticLoadPlaces(currentLatitude, currentLongitude) {
+    return [
+        {
+            name: "Location 1",
+            location: {
+                lat: currentLatitude + 0.001, // Example offset
+                lng: currentLongitude + 0.001, // Example offset
+            }
+        },
+        {
+            name: 'Location 2',
+            location: {
+                lat: currentLatitude + 0.002, // Example offset
+                lng: currentLongitude + 0.002, // Example offset
+            }
+        }
+    ];
+}
+
+function renderPlaces(places) {
+    let scene = document.querySelector('a-scene');
+
+    places.forEach((place) => {
+        const latitude = place.location.lat;
+        const longitude = place.location.lng;
+
+        // Add place icon
+        const icon = document.createElement('a-image');
+        icon.setAttribute('gps-entity-place', `latitude: ${latitude}; longitude: ${longitude}`);
+        icon.setAttribute('name', place.name);
+        icon.setAttribute('src', '../assets/map-marker.png'); // Update path as necessary
+
+        // Scale for better visibility
+        icon.setAttribute('scale', '20, 20');
+
+        icon.addEventListener('loaded', () => window.dispatchEvent(new CustomEvent('gps-entity-place-loaded')));
+
+        // Click event listener
+        const clickListener = (ev) => {
+            console.log(ev.detail)
+
+            ev.stopPropagation();
+            ev.preventDefault();
+
+            const name = ev.target.getAttribute('name');
+            const el = ev.detail.intersection && ev.detail.intersection.object.el;
+
+            if (el && el === ev.target) {
+                alert("Here")
+                const label = document.createElement('span');
+                const container = document.createElement('div');
+                container.setAttribute('id', 'place-label');
+                label.innerText = name;
+                container.appendChild(label);
+                document.body.appendChild(container);
+
+                // Remove the label after 1.5 seconds
+                setTimeout(() => {
+                    container.parentElement.removeChild(container);
+                }, 1500);
+            }
+        };
+
+        icon.addEventListener('click', clickListener);
+        scene.appendChild(icon);
+    });
+}

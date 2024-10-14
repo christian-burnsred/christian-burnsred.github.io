@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset='utf-8'>
     <meta http-equiv='X-UA-Compatible' content='IE=edge'>
@@ -11,15 +10,18 @@
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
     <script src="./main.js" defer></script>
 </head>
-
 <body style='margin: 0; overflow: hidden;'>
 <a-scene
         vr-mode-ui='enabled: false'
         embedded
         arjs='sourceType: webcam; sourceWidth:1280; sourceHeight:960; displayWidth: 1280; displayHeight: 960; debugUIEnabled: false;'>
+
+    <!-- Add a camera and cursor for interaction -->
     <a-camera gps-camera="minDistance: 0;" rotation-reader></a-camera>
-<!--    <a-box position="0 1 -3" rotation="0 45 45" color="#4CC3D9"></a-box>-->
+    <a-entity cursor="rayOrigin: mouse" raycaster="objects: .clickable"></a-entity>
+
+    <!-- Hardcoded clickable box -->
+    <a-box class="clickable" position="0 1 -3" rotation="0 45 45" color="#4CC3D9" scale="1 1 1"></a-box>
 </a-scene>
 </body>
-
 </html>
