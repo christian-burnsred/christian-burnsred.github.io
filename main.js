@@ -44,7 +44,7 @@ window.onload = () => {
 
     const cursor = document.createElement('a-entity');
     cursor.setAttribute('cursor', 'rayOrigin: mouse; fuse: false;');
-    cursor.setAttribute('raycaster', 'objects: a-box, a-image');
+    cursor.setAttribute('raycaster', 'objects: a-box, a-gltf-model');
     cursor.setAttribute('raycaster', 'ignore: [canvas]');
     cursor.setAttribute('raycaster', 'objects: .clickable; showLine: true;');
     scene.camera.el.appendChild(cursor);
@@ -63,17 +63,19 @@ window.onload = () => {
             placeEntity.setAttribute('class', 'clickable');
             placeEntity.setAttribute('id', `place-${index}`);
 
-            const placeImage = document.createElement('a-image');
-            placeImage.setAttribute('src', 'cube-logo-100.png');
-            placeImage.setAttribute('scale', '1 1 1');
-            placeImage.setAttribute('position', '0 0 0');
-            placeEntity.appendChild(placeImage);
+            // 3D model that always faces the camera
+            const placeModel = document.createElement('a-gltf-model');
+            placeModel.setAttribute('src', 'Shiny Amberis-Amur.glb');  // Path to the 3D model
+            placeModel.setAttribute('scale', '0.1 0.1 0.1');    // Adjust scale as necessary
+            placeModel.setAttribute('look-at', '[gps-camera]');  // Always face the camera
+            placeModel.setAttribute('class', 'clickable');  // Ensure the model is clickable
+            placeEntity.appendChild(placeModel);
 
             // Invisible hitbox for better click detection
             const hitbox = document.createElement('a-box');
             hitbox.setAttribute('class', 'clickable');
-            hitbox.setAttribute('material', `color: ${colours[index % colours.length]}; opacity: 0.2`);
-            hitbox.setAttribute('scale', '2 2 0.1');
+            hitbox.setAttribute('material', `color: transparent; opacity: 0.0`);
+            hitbox.setAttribute('scale', '2 2 0');
             hitbox.setAttribute('position', '0 0 0');
             placeEntity.appendChild(hitbox);
 
