@@ -1,4 +1,45 @@
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"
+import {getFirestore, collection, getDocs} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"
+
 window.onload = () => {
+    // See: https://support.google.com/firebase/answer/7015592
+    const firebaseConfig = {
+        apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+        authDomain: "ccc-data-store.firebaseapp.com",
+        projectId: "ccc-data-store",
+        storageBucket: "ccc-data-store.appspot.com",
+        messagingSenderId: import.meta.env.VITE_FIREBASE_SENDER_ID,
+        appId: import.meta.env.VITE_FIREBASE_APP_ID,
+        measurementId: import.meta.env.VITE_FIREBASE_MEASURE_ID
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const userDoc = collection(db, "markers");
+
+    async function fetchMarkers() {
+        try {
+            const snapshot = await getDocs(userDoc);
+            const markersList = [];
+
+            snapshot.forEach(doc => {
+                markersList.push({
+                    id: doc.id,  // Storing the document ID
+                    ...doc.data()  // Merging the document data
+                });
+            });
+
+            console.log("Markers List:", markersList);
+            console.log("Marker:", markersList[0].equipment);
+            return markersList;  // Optionally return the list if needed
+        } catch (error) {
+            console.error("Error reading document: ", error);
+            return [];
+        }
+    }
+
     const scene = document.querySelector('a-scene');
 
     const cursor = document.createElement('a-entity');
@@ -10,31 +51,20 @@ window.onload = () => {
 
     console.log('Cursor entity added to scene');
 
-    navigator.geolocation.getCurrentPosition((position) => {
-        const currentLatitude = position.coords.latitude;
-        const currentLongitude = position.coords.longitude;
+    const colours = ['red', 'green', 'yellow', 'blue'];
 
-        const places = [
-            {
-                name: "Equipment",
-                description: "Eqipment Description",
-                latitude: currentLatitude + 0.0001,
-                longitude: currentLongitude + 0.0001,
-                image: 'assets/cube-logo-100.png',
-                infoUrl: "http://bhp-qr-code-evolve-platform-prototype1.burnsred.com.au/"
-            }
-        ];
-
-        places.forEach((place, index) => {
+    navigator.geolocation.getCurrentPosition(async () => {
+        const markers = await fetchMarkers(); // Wait for the markers to be fetched
+        markers.forEach((marker, index) => {
             const placeEntity = document.createElement('a-entity');
-            placeEntity.setAttribute('gps-entity-place', `latitude: ${place.latitude}; longitude: ${place.longitude};`);
+            placeEntity.setAttribute('gps-entity-place', `latitude: ${marker.location.lat}; longitude: ${marker.location.lng};`);
             placeEntity.setAttribute('look-at', '[gps-camera]');
             placeEntity.setAttribute('scale', '6 6 6');
             placeEntity.setAttribute('class', 'clickable');
             placeEntity.setAttribute('id', `place-${index}`);
 
             const placeImage = document.createElement('a-image');
-            placeImage.setAttribute('src', place.image);
+            placeImage.setAttribute('src', 'assets/cube-logo-100.png');
             placeImage.setAttribute('scale', '1 1 1');
             placeImage.setAttribute('position', '0 0 0');
             placeEntity.appendChild(placeImage);
@@ -42,24 +72,22 @@ window.onload = () => {
             // Invisible hitbox for better click detection
             const hitbox = document.createElement('a-box');
             hitbox.setAttribute('class', 'clickable');
-            hitbox.setAttribute('material', 'color: transparent; opacity: 0.0');
+            hitbox.setAttribute('material', `color: ${colours[index]}; opacity: 0.5`);
             hitbox.setAttribute('scale', '1.5 1.5 0.1');
             hitbox.setAttribute('position', '0 0 0');
             placeEntity.appendChild(hitbox);
 
             // Add click listener
             placeEntity.addEventListener('click', function () {
-                console.log(`Clicked on ${place.name}`);
-                showModal(place);
+                console.log(`Clicked on ${marker.equipment}`);
+                showModal(marker);
             });
 
             scene.appendChild(placeEntity);
         });
 
         // Function to show the modal with landmark details
-        // Function to show the modal with landmark details
-        // Function to show the modal with landmark details
-        function showModal(place) {
+        function showModal(marker) {
             // Create a modal container
             const modal = document.createElement('div');
             modal.setAttribute('id', 'landmark-modal');
@@ -92,13 +120,21 @@ window.onload = () => {
 
             // Landmark name
             const title = document.createElement('h2');
-            title.innerText = place.name;
+            title.innerText = marker.equipment;
             modal.appendChild(title);
 
             // Landmark description
             const description = document.createElement('p');
-            description.innerText = place.description;
+            description.innerHTML = `
+                <strong>Operation:</strong> ${marker.operation}<br>
+                <strong>Control:</strong> ${marker.control}<br>
+                <strong>Control Framework:</strong> ${marker.framework}<br>
+                <strong>Operating Context:</strong> ${marker.context}<br>
+                <strong>Equipment:</strong> ${marker.equipment}<br>
+                <strong>Location:</strong> ${marker.location.lat}, ${marker.location.lng}<br>
+            `;
             modal.appendChild(description);
+
 
             // Button to open URL in new tab
             const openUrlButton = document.createElement('button');
@@ -107,7 +143,7 @@ window.onload = () => {
             openUrlButton.style.padding = '10px 20px';
             openUrlButton.style.cursor = 'pointer';
             openUrlButton.onclick = () => {
-                window.open(place.infoUrl, '_blank');
+                window.open(marker.url, '_blank');
             };
             modal.appendChild(openUrlButton);
 
