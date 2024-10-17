@@ -64,7 +64,7 @@ window.onload = () => {
             placeEntity.setAttribute('id', `place-${index}`);
 
             const placeImage = document.createElement('a-image');
-            placeImage.setAttribute('src', './assets/cube-logo-100.png');
+            placeImage.setAttribute('src', 'cube-logo-100.png');
             placeImage.setAttribute('scale', '1 1 1');
             placeImage.setAttribute('position', '0 0 0');
             placeEntity.appendChild(placeImage);
