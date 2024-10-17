@@ -33,7 +33,7 @@ window.onload = () => {
 
             console.log("Markers List:", markersList);
             console.log("Marker:", markersList[0].equipment);
-            return markersList;  // Optionally return the list if needed
+            return markersList;
         } catch (error) {
             console.error("Error reading document: ", error);
             return [];
@@ -49,11 +49,32 @@ window.onload = () => {
     cursor.setAttribute('raycaster', 'objects: .clickable; showLine: true;');
     scene.camera.el.appendChild(cursor);
 
-    console.log('Cursor entity added to scene');
+    function haversineDistance(coords1, coords2) {
+        function toRad(x) {
+            return x * Math.PI / 180;
+        }
 
-    const colours = ['red', 'green', 'yellow', 'blue', 'orange', ];
+        const lon1 = coords1[0];
+        const lat1 = coords1[1];
 
-    navigator.geolocation.getCurrentPosition(async () => {
+        const lon2 = coords2[0];
+        const lat2 = coords2[1];
+
+        const R = 6371; // km
+
+        const x1 = lat2 - lat1;
+        const dLat = toRad(x1);
+        const x2 = lon2 - lon1;
+        const dLon = toRad(x2)
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return R * c;
+    }
+
+    navigator.geolocation.getCurrentPosition(async (userLocation) => {
         const markers = await fetchMarkers(); // Wait for the markers to be fetched
         markers.forEach((marker, index) => {
             const placeEntity = document.createElement('a-entity');
@@ -65,11 +86,21 @@ window.onload = () => {
 
             // 3D model that always faces the camera
             const placeModel = document.createElement('a-gltf-model');
-            placeModel.setAttribute('src', 'Shiny Amberis-Amur.glb');  // Path to the 3D model
-            placeModel.setAttribute('scale', '0.1 0.1 0.1');    // Adjust scale as necessary
-            placeModel.setAttribute('look-at', '[gps-camera]');  // Always face the camera
-            placeModel.setAttribute('class', 'clickable');  // Ensure the model is clickable
+            placeModel.setAttribute('src', 'Shiny Amberis-Amur.glb');
+            placeModel.setAttribute('scale', '0.1 0.1 0.1');
+            placeModel.setAttribute('look-at', '[gps-camera]');
+            placeModel.setAttribute('class', 'clickable');
             placeEntity.appendChild(placeModel);
+
+            // Text for Equipment and Distance
+            const textEntity = document.createElement('a-text');
+            const distance = haversineDistance([marker.location.lng, marker.location.lat], [userLocation.coords.longitude, userLocation.coords.latitude]).toFixed(2);
+            textEntity.setAttribute('value', `${marker.equipment}\n${distance} km`);
+            textEntity.setAttribute('align', 'center');
+            textEntity.setAttribute('position', '0 1.5 0');
+            textEntity.setAttribute('scale', '1.5 1.5 1.5');
+            textEntity.setAttribute('look-at', '[gps-camera]');
+            placeEntity.appendChild(textEntity);
 
             // Invisible hitbox for better click detection
             const hitbox = document.createElement('a-box');
@@ -88,68 +119,100 @@ window.onload = () => {
             scene.appendChild(placeEntity);
         });
 
-        // Function to show the modal with landmark details
         function showModal(marker) {
-            // Create a modal container
             const modal = document.createElement('div');
             modal.setAttribute('id', 'landmark-modal');
-            modal.style.position = 'fixed';
-            modal.style.top = '0';
-            modal.style.left = '0';
-            modal.style.width = '100%';
-            modal.style.height = '100%';
-            modal.style.backgroundColor = 'rgba(255, 255, 255, 0.95)'; // Semi-transparent background
-            modal.style.zIndex = '9999';
-            modal.style.display = 'flex';
-            modal.style.flexDirection = 'column';
-            modal.style.alignItems = 'left';
-            modal.style.justifyContent = 'center';
-            modal.style.padding = '20px';
-            modal.style.boxSizing = 'border-box'; // Ensure padding doesn't affect overall size
+            Object.assign(modal.style, {
+                position: 'fixed',
+                top: '0',
+                left: '0',
+                width: '100%',
+                height: '100%',
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                zIndex: '9999',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'stretch',
+                justifyContent: 'flex-start',
+                padding: '20px',
+                boxSizing: 'border-box',
+                fontFamily: 'Arial, sans-serif',
+                color: '#333'
+            });
 
-            // Create an 'X' icon for closing the modal
             const closeIcon = document.createElement('div');
             closeIcon.innerHTML = '&times;';
-            closeIcon.style.position = 'absolute';
-            closeIcon.style.top = '20px';
-            closeIcon.style.right = '20px';
-            closeIcon.style.fontSize = '30px';
-            closeIcon.style.cursor = 'pointer';
-            closeIcon.onclick = () => {
-                document.body.removeChild(modal);
-            };
+            Object.assign(closeIcon.style, {
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                fontSize: '30px',
+                cursor: 'pointer',
+                color: '#666',
+                zIndex: '1'
+            });
+            closeIcon.onclick = () => document.body.removeChild(modal);
             modal.appendChild(closeIcon);
 
-            // Landmark name
             const title = document.createElement('h2');
             title.innerText = marker.equipment;
+            Object.assign(title.style, {
+                margin: '0',
+                padding: '20px 0',
+                color: '#2c3e50',
+                fontSize: '24px',
+                borderBottom: '2px solid #3498db',
+                position: 'sticky',
+                top: '0',
+            });
             modal.appendChild(title);
 
-            // Landmark description
-            const description = document.createElement('p');
+            const contentWrapper = document.createElement('div');
+            Object.assign(contentWrapper.style, {
+                flex: '1',
+                overflowY: 'auto',
+                padding: '20px 0'
+            });
+            modal.appendChild(contentWrapper);
+
+            const description = document.createElement('div');
             description.innerHTML = `
-                <strong>Operation:</strong> ${marker.operation}<br>
-                <strong>Control:</strong> ${marker.control}<br>
-                <strong>Control Framework:</strong> ${marker.framework}<br>
-                <strong>Operating Context:</strong> ${marker.context}<br>
-                <strong>Equipment:</strong> ${marker.equipment}<br>
-                <strong>Location:</strong> ${marker.location.lat}, ${marker.location.lng}<br>
-            `;
-            modal.appendChild(description);
+            <p><strong>Operation:</strong> ${marker.operation}</p>
+            <p><strong>Control:</strong> ${marker.control}</p>
+            <p><strong>Control Framework:</strong> ${marker.framework}</p>
+            <p><strong>Operating Context:</strong> ${marker.context}</p>
+            <p><strong>Equipment:</strong> ${marker.equipment}</p>
+            <p><strong>Location</strong></br>
+                &emsp;<strong>Lat:</strong> ${marker.location.lat}</br>
+                &emsp;<strong>Lng:</strong> ${marker.location.lng}</p>
+            <p><strong>Distance:</strong> ${haversineDistance([marker.location.lng, marker.location.lat], [userLocation.coords.longitude, userLocation.coords.latitude]).toFixed(2)} km</p>
+        `;
+            Object.assign(description.style, {
+                marginBottom: '20px',
+                lineHeight: '1.6',
+                fontSize: '16px'
+            });
+            contentWrapper.appendChild(description);
 
-
-            // Button to open URL in new tab
             const openUrlButton = document.createElement('button');
             openUrlButton.innerText = 'Perform CCC';
-            openUrlButton.style.marginTop = '10px';
-            openUrlButton.style.padding = '10px 20px';
-            openUrlButton.style.cursor = 'pointer';
-            openUrlButton.onclick = () => {
-                window.open(marker.url, '_blank');
-            };
+            Object.assign(openUrlButton.style, {
+                backgroundColor: '#3498db',
+                color: 'white',
+                border: 'none',
+                padding: '12px 24px',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontSize: '16px',
+                transition: 'background-color 0.3s',
+                width: '100%',
+                marginBottom: '20px'
+            });
+            openUrlButton.onmouseover = () => openUrlButton.style.backgroundColor = '#2980b9';
+            openUrlButton.onmouseout = () => openUrlButton.style.backgroundColor = '#3498db';
+            openUrlButton.onclick = () => window.open(marker.url, '_blank');
             modal.appendChild(openUrlButton);
 
-            // Add modal to the body
             document.body.appendChild(modal);
         }
 
