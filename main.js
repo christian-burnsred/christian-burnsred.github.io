@@ -51,7 +51,7 @@ window.onload = () => {
 
     console.log('Cursor entity added to scene');
 
-    const colours = ['red', 'green', 'yellow', 'blue'];
+    const colours = ['red', 'green', 'yellow', 'blue', 'orange', ];
 
     navigator.geolocation.getCurrentPosition(async () => {
         const markers = await fetchMarkers(); // Wait for the markers to be fetched
@@ -72,8 +72,8 @@ window.onload = () => {
             // Invisible hitbox for better click detection
             const hitbox = document.createElement('a-box');
             hitbox.setAttribute('class', 'clickable');
-            hitbox.setAttribute('material', `color: ${colours[index]}; opacity: 0.5`);
-            hitbox.setAttribute('scale', '1.5 1.5 0.1');
+            hitbox.setAttribute('material', `color: ${colours[index % colours.length]}; opacity: 0.2`);
+            hitbox.setAttribute('scale', '2 2 0.1');
             hitbox.setAttribute('position', '0 0 0');
             placeEntity.appendChild(hitbox);
 

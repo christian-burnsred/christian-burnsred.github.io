@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset='utf-8'>
     <meta http-equiv='X-UA-Compatible' content='IE=edge'>
@@ -7,11 +7,41 @@
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
-
-<!--    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>-->
-<!--    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>-->
-
     <script type="module" src="./main.js" defer></script>
+
+    <style>
+        /* Fix the menu bar to the bottom of the screen */
+        .menu-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100vw;
+            height: 60px;
+            background-color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            z-index: 1000;
+        }
+
+        /* Style for each section in the menu bar */
+        .menu-item {
+            flex: 1;
+            text-align: center;
+            padding: 15px 10px; /* Adjust padding for mobile view */
+            cursor: pointer;
+            font-size: 16px; /* Reduce font size for mobile */
+            border-left: 1px solid gray;
+            border-right: 1px solid gray;
+        }
+
+        @media screen and (max-width: 600px) {
+            .menu-item {
+                font-size: 14px; /* Further reduce font size on small screens */
+            }
+        }
+    </style>
 </head>
 
 <body style='margin: 0; overflow: hidden;'>
@@ -19,11 +49,19 @@
         vr-mode-ui='enabled: false'
         embedded
         arjs='sourceType: webcam; sourceWidth:1280; sourceHeight:960; displayWidth: 1280; displayHeight: 960; debugUIEnabled: false;'>
-    <a-camera gps-camera="minDistance: 0;" rotation-reader>
-    </a-camera>
-
-<!--    <a-gltf-model src="assets/Shiny Amberis-Amur.glb" position="0 3 10" rotation="45 0 0" scale="0.3 0.3 0.3"></a-gltf-model>-->
-
+    <a-camera gps-camera="minDistance: 0;" rotation-reader></a-camera>
 </a-scene>
+
+<!-- Menu bar fixed to the bottom of the screen -->
+<div class="menu-bar">
+    <div class="menu-item" onclick="window.open('https://christian-burnsred.github.io/qr-generator/', '_blank');">
+        QR Generator
+    </div>
+    <div class="menu-item"
+         onclick="window.open('http://bhp-qr-code-evolve-platform-prototype1.burnsred.com.au/?params=eyJvcGVyYXRpb24iOiIiLCJsZWFkT2JzZXJ2ZXIiOiIiLCJyaXNrU2VsZWN0ZWQiOiIiLCJjb250cm9sRnJhbWV3b3JrU2VsZWN0ZWQiOiIiLCJvcGVyYXRpbmdDb250ZXh0cyI6IiIsImVxdWlwbWVudFNlbGVjdGVkIjoiIn0%3D','_blank');">
+        'Flex' App
+    </div>
+</div>
+
 </body>
 </html>
