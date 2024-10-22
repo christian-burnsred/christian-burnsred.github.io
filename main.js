@@ -7,7 +7,10 @@ import {
     doc
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"
 
-window.onload = () => {
+let userLocation = null;
+let markers = null
+
+window.onload = async () => {
     // See: https://support.google.com/firebase/answer/7015592
     const firebaseConfig = {
         apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -25,6 +28,7 @@ window.onload = () => {
 
     const userDoc = collection(db, "markers");
     const assignees = collection(db, "assignees");
+    markers = await fetchMarkers()
 
     async function fetchUsers() {
         try {
@@ -79,24 +83,37 @@ window.onload = () => {
 
     // Update the existing event listener for the assigned to me button
     document.getElementById('assignedToMeButton').addEventListener('click', function (event) {
-        event.preventDefault(); // Prevent default link behavior
+        event.preventDefault();
         showAssignedModal();
     });
 
-// Event listener for closing the assigned items modal
+    // Event listener for closing the assigned items modal
     document.getElementById('closeAssignedModal').addEventListener('click', function () {
         document.getElementById('assigned-modal').style.display = 'none';
     });
 
-// Modify your existing showModal function to work with the new setup
-    function showMarkerModal(marker) {
-        // Your existing modal code here, but make sure to use a different ID
-        // for this modal to avoid conflicts with the assigned-modal
-        const modal = document.createElement('div');
-        modal.setAttribute('id', 'marker-details-modal');
-        // ... rest of your existing modal creation code ...
+    function showToast(message, colour) {
+        const toastContainer = document.getElementById('toast-container');
 
-        document.body.appendChild(modal);
+        // Create the toast element
+        const toast = document.createElement('div');
+        toast.textContent = message;
+        toast.style.background = colour;
+        toast.style.color = '#fff';
+        toast.style.padding = '10px 20px';
+        toast.style.marginTop = '65px';
+        toast.style.borderRadius = '5px';
+        toast.style.fontSize = '16px';
+        toast.style.textAlign = 'center';
+        toast.style.minWidth = '200px';
+
+        // Add the toast to the container
+        toastContainer.appendChild(toast);
+
+        // Remove the toast after the duration
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
     }
 
     async function loginUser(username, password) {
@@ -108,15 +125,17 @@ window.onload = () => {
                 const validPassword = await validatePassword(user.id, password);
                 if (validPassword) {
                     console.log("Login successful");
+                    showToast("Logged in as " + user.name, 'green');
                     // Update UI after login
                     updateUIAfterLogin(user);
                 } else {
-                    alert("Invalid password");
+                    showToast("Invalid password", "red");
                 }
             } else {
-                alert("User not found");
+                showToast("User not found", "red");
             }
         } catch (error) {
+            showToast("An error occurred during login", "red");
             console.error("Login error:", error);
         }
     }
@@ -145,6 +164,54 @@ window.onload = () => {
 
         // Add click event listener to the user menu
         userMenu.addEventListener('click', toggleDropdown);
+        updateMarkers();
+
+
+        // Fetch the assigned actions count
+        const assignedMarkers = markers.filter(marker => marker.assignee && marker.assignee.username === currentUser.username);
+        const noAssignedActions = assignedMarkers.length;
+
+        // Add notification bubble next to the user's name
+        const notificationCircle = document.createElement('span');
+        notificationCircle.setAttribute('id', 'notificationCircle');
+        notificationCircle.textContent = noAssignedActions;
+        notificationCircle.style.position = 'absolute';
+        notificationCircle.style.top = '0px';
+        notificationCircle.style.left = '-23px';
+        notificationCircle.style.backgroundColor = '#ff0000';
+        notificationCircle.style.color = '#fff';
+        notificationCircle.style.borderRadius = '50%';
+        notificationCircle.style.width = '20px';
+        notificationCircle.style.height = '20px';
+        notificationCircle.style.display = 'flex';
+        notificationCircle.style.justifyContent = 'center';
+        notificationCircle.style.alignItems = 'center';
+        notificationCircle.style.fontSize = '12px';
+
+        // Append the notification circle to the username
+        userNameSpan.style.position = 'relative';
+        userNameSpan.appendChild(notificationCircle);
+
+        // Update the notification for the "My Assigned Actions" button
+        const assignedNotification = document.createElement('span');
+        assignedNotification.setAttribute('id', 'assignedNotification');
+        assignedNotification.textContent = noAssignedActions;
+        assignedNotification.style.position = 'absolute';
+        assignedNotification.style.top = '18px';
+        assignedNotification.style.right = '4px';
+        assignedNotification.style.backgroundColor = '#ff0000';
+        assignedNotification.style.color = '#fff';
+        assignedNotification.style.borderRadius = '50%';
+        assignedNotification.style.width = '20px';
+        assignedNotification.style.height = '20px';
+        assignedNotification.style.display = 'flex';
+        assignedNotification.style.justifyContent = 'center';
+        assignedNotification.style.alignItems = 'center';
+        assignedNotification.style.fontSize = '12px';
+
+        // Ensure the button has relative positioning to place the notification
+        assignedToMeButton.style.position = 'relative';
+        assignedToMeButton.appendChild(assignedNotification);
     }
 
     async function showAssignedModal() {
@@ -158,9 +225,8 @@ window.onload = () => {
         assignedItemsList.innerHTML = ''; // Clear previous content
 
         try {
-            const markers = await fetchMarkers();
-            console.log(markers)
-            const assignedMarkers = markers.filter(marker => marker.assignee.username === currentUser.username);
+            const isAssignedMarkers = markers.filter(marker => marker.assignee)
+            const assignedMarkers = isAssignedMarkers.filter(marker => marker.assignee.username === currentUser.username);
 
             if (assignedMarkers.length === 0) {
                 assignedItemsList.innerHTML = '<p>No assigned actions.</p>';
@@ -175,6 +241,7 @@ window.onload = () => {
                     <p><strong>Location</strong></br>
                         &emsp;<strong>Lat:</strong> ${marker.location.lat}</br>
                         &emsp;<strong>Lng:</strong> ${marker.location.lng}</p>
+                    <p><strong>Distance:</strong> ${haversineDistance([marker.location.lng, marker.location.lat], [userLocation.coords.longitude, userLocation.coords.latitude]).toFixed(2)} km</p>
                     <button class="view-details-btn" data-marker-id="${marker.id}">View Details</button>
                 `;
                     assignedItemsList.appendChild(itemElement);
@@ -184,15 +251,17 @@ window.onload = () => {
                 assignedItemsList.querySelectorAll('.view-details-btn').forEach(button => {
                     button.addEventListener('click', (event) => {
                         const markerId = event.target.getAttribute('data-marker-id');
+                        console.log(markerId)
                         const marker = assignedMarkers.find(m => m.id === markerId);
                         if (marker) {
-                            showMarkerModal(marker);
+                            showModal(marker);
                         }
                     });
                 });
             }
 
             assignedModal.style.display = 'flex';
+            console.log(assignedModal.style.zIndex);
         } catch (error) {
             console.error('Error fetching assigned markers:', error);
             assignedItemsList.innerHTML = '<p>Error loading assigned actions. Please try again later.</p>';
@@ -207,11 +276,15 @@ window.onload = () => {
 
         userMenu.style.display = 'none';
         loginButton.style.display = 'block';
+        document.getElementById('assigned-modal').style.display = 'none';
 
         // Remove the click event listener from the user menu
         userMenu.removeEventListener('click', toggleDropdown);
 
         // Optionally, clear user session data here if any
+        currentUser = null
+        updateMarkers()
+        showToast('Signed out', "green")
         console.log('User signed out');
     });
 
@@ -232,22 +305,6 @@ window.onload = () => {
         const username = event.target.username.value;
         const password = event.target.password.value;
         loginUser(username, password);
-    });
-
-    // Event listener for sign out button
-    document.getElementById("signOutButton").addEventListener("click", () => {
-        // Reset the UI to show the login button again
-        const userNameSpan = document.getElementById("userName");
-        userNameSpan.style.display = "none"; // Hide the username
-
-        const signOutButton = document.getElementById("signOutButton");
-        signOutButton.style.display = "none"; // Hide the sign-out button
-
-        const loginButton = document.getElementById("loginButton");
-        if (loginButton) loginButton.style.display = "inline"; // Show the login button again
-
-        // Optionally, clear user session data here if any
-        console.log("User signed out");
     });
 
     // Function to show the login container
@@ -294,9 +351,105 @@ window.onload = () => {
         return R * c;
     }
 
-    navigator.geolocation.getCurrentPosition(async (userLocation) => {
-        const users = await fetchUsers()
-        const markers = await fetchMarkers(); // Wait for the markers to be fetched
+    function showModal(marker) {
+        const modal = document.createElement('div');
+        modal.setAttribute('id', 'landmark-modal');
+        Object.assign(modal.style, {
+            position: 'fixed',
+            top: '60px',
+            bottom: '60px',
+            left: '0',
+            backgroundColor: 'rgba(255, 255, 255, 1)',
+            zIndex: '1000',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'stretch',
+            justifyContent: 'flex-start',
+            padding: '20px',
+            boxSizing: 'border-box',
+            fontFamily: 'Arial, sans-serif',
+            color: '#333'
+        });
+
+        const closeIcon = document.createElement('div');
+        closeIcon.innerHTML = '&times;';
+        Object.assign(closeIcon.style, {
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            fontSize: '30px',
+            cursor: 'pointer',
+            color: '#666',
+            zIndex: '1'
+        });
+        closeIcon.onclick = () => document.body.removeChild(modal);
+        modal.appendChild(closeIcon);
+
+        const title = document.createElement('h2');
+        title.innerText = `${marker.equipment} - ${marker.form}`;
+        Object.assign(title.style, {
+            margin: '0',
+            padding: '20px 0',
+            color: '#e55400',
+            fontSize: '24px',
+            borderBottom: '2px solid #e55400',
+            position: 'sticky',
+            top: '0',
+        });
+        modal.appendChild(title);
+
+        const contentWrapper = document.createElement('div');
+        Object.assign(contentWrapper.style, {
+            flex: '1',
+            overflowY: 'auto',
+            padding: '20px 0'
+        });
+        modal.appendChild(contentWrapper);
+
+        const description = document.createElement('div');
+        description.innerHTML = `
+            <p><strong>Operation:</strong> ${marker.operation}</p>
+            <p><strong>Form:</strong> ${marker.form}</p>
+            <p><strong>Control:</strong> ${marker.control}</p>
+            <p><strong>Control Framework:</strong> ${marker.framework}</p>
+            <p><strong>Operating Context:</strong> ${marker.context}</p>
+            <p><strong>Equipment:</strong> ${marker.equipment}</p>
+            <p><strong>Assignee:</strong> ${marker.assignee ? marker.assignee.name : ''}</p>
+            <p><strong>Location</strong></br>
+                &emsp;<strong>Lat:</strong> ${marker.location.lat}</br>
+                &emsp;<strong>Lng:</strong> ${marker.location.lng}</p>
+            <p><strong>Distance:</strong> ${haversineDistance([marker.location.lng, marker.location.lat], [userLocation.coords.longitude, userLocation.coords.latitude]).toFixed(2)} km</p>
+        `;
+        Object.assign(description.style, {
+            marginBottom: '20px',
+            lineHeight: '1.6',
+            fontSize: '16px'
+        });
+        contentWrapper.appendChild(description);
+
+        const openUrlButton = document.createElement('button');
+        openUrlButton.innerText = `Perform ${marker.form}`;
+        Object.assign(openUrlButton.style, {
+            backgroundColor: '#e55400',
+            color: 'white',
+            border: 'none',
+            padding: '12px 24px',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            fontSize: '16px',
+            transition: 'background-color 0.3s',
+            width: '100%',
+            marginBottom: '20px'
+        });
+        openUrlButton.onmouseover = () => openUrlButton.style.backgroundColor = '#aa3f00';
+        openUrlButton.onmouseout = () => openUrlButton.style.backgroundColor = '#e55400';
+        openUrlButton.onclick = () => window.open(marker.url, '_blank');
+        modal.appendChild(openUrlButton);
+
+        document.body.appendChild(modal);
+    }
+
+    async function updateMarkers() {
         markers.forEach((marker, index) => {
             const placeEntity = document.createElement('a-entity');
             placeEntity.setAttribute('gps-entity-place', `latitude: ${marker.location.lat}; longitude: ${marker.location.lng};`);
@@ -305,9 +458,26 @@ window.onload = () => {
             placeEntity.setAttribute('class', 'clickable');
             placeEntity.setAttribute('id', `place-${index}`);
 
+            // Changed marker type if assigned
+            let textColour
+            let markerType
+
+            if (!currentUser) {
+                textColour = 'white'
+                markerType = 'Shiny Amberis-Amur.glb'
+            } else {
+                if (marker.assignee && marker.assignee.username === currentUser.username) {
+                    textColour = '#e55400'
+                    markerType = 'Shiny Amberis-Amur.glb'
+                } else {
+                    textColour = 'white'
+                    markerType = 'Greyed Shiny Amberis-Amur.glb'
+                }
+            }
+
             // 3D model that always faces the camera
             const placeModel = document.createElement('a-gltf-model');
-            placeModel.setAttribute('src', 'Shiny Amberis-Amur.glb');
+            placeModel.setAttribute('src', markerType);
             placeModel.setAttribute('scale', '0.1 0.1 0.1');
             placeModel.setAttribute('look-at', '[gps-camera]');
             placeModel.setAttribute('class', 'clickable');
@@ -317,6 +487,7 @@ window.onload = () => {
             const textEntity = document.createElement('a-text');
             const distance = haversineDistance([marker.location.lng, marker.location.lat], [userLocation.coords.longitude, userLocation.coords.latitude]).toFixed(2);
             textEntity.setAttribute('value', `${marker.equipment}\n${distance} km`);
+            textEntity.setAttribute('color', textColour);
             textEntity.setAttribute('align', 'center');
             textEntity.setAttribute('position', '0 1.5 0');
             textEntity.setAttribute('scale', '1.5 1.5 1.5');
@@ -326,7 +497,7 @@ window.onload = () => {
             // Invisible hitbox for better click detection
             const hitbox = document.createElement('a-box');
             hitbox.setAttribute('class', 'clickable');
-            hitbox.setAttribute('material', `color: transparent; opacity: 0.0`);
+            hitbox.setAttribute('material', `opacity: 0.0`);
             hitbox.setAttribute('scale', '2 2 0');
             hitbox.setAttribute('position', '0 0 0');
             placeEntity.appendChild(hitbox);
@@ -336,110 +507,13 @@ window.onload = () => {
                 console.log(`Clicked on ${marker.equipment}`);
                 showModal(marker);
             });
-
             scene.appendChild(placeEntity);
         });
+    }
 
-        function showModal(marker) {
-            const modal = document.createElement('div');
-            modal.setAttribute('id', 'landmark-modal');
-            Object.assign(modal.style, {
-                position: 'fixed',
-                top: '0',
-                left: '0',
-                width: '100%',
-                height: '100%',
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                zIndex: '9999',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'stretch',
-                justifyContent: 'flex-start',
-                padding: '20px',
-                boxSizing: 'border-box',
-                fontFamily: 'Arial, sans-serif',
-                color: '#333'
-            });
-
-            const closeIcon = document.createElement('div');
-            closeIcon.innerHTML = '&times;';
-            Object.assign(closeIcon.style, {
-                position: 'absolute',
-                top: '20px',
-                right: '20px',
-                fontSize: '30px',
-                cursor: 'pointer',
-                color: '#666',
-                zIndex: '1'
-            });
-            closeIcon.onclick = () => document.body.removeChild(modal);
-            modal.appendChild(closeIcon);
-
-            const title = document.createElement('h2');
-            title.innerText = `${marker.equipment} - ${marker.form}`;
-            Object.assign(title.style, {
-                margin: '0',
-                padding: '20px 0',
-                color: '#e55400',
-                fontSize: '24px',
-                borderBottom: '2px solid #e55400',
-                position: 'sticky',
-                top: '0',
-            });
-            modal.appendChild(title);
-
-            // const assignee = fetchAssigneeData(marker)
-
-            const contentWrapper = document.createElement('div');
-            Object.assign(contentWrapper.style, {
-                flex: '1',
-                overflowY: 'auto',
-                padding: '20px 0'
-            });
-            modal.appendChild(contentWrapper);
-
-            const description = document.createElement('div');
-            description.innerHTML = `
-            <p><strong>Operation:</strong> ${marker.operation}</p>
-            <p><strong>Form:</strong> ${marker.form}</p>
-            <p><strong>Control:</strong> ${marker.control}</p>
-            <p><strong>Control Framework:</strong> ${marker.framework}</p>
-            <p><strong>Operating Context:</strong> ${marker.context}</p>
-            <p><strong>Equipment:</strong> ${marker.equipment}</p>
-            <p><strong>Assignee:</strong> ${marker.assignee.name}</p>
-            <p><strong>Location</strong></br>
-                &emsp;<strong>Lat:</strong> ${marker.location.lat}</br>
-                &emsp;<strong>Lng:</strong> ${marker.location.lng}</p>
-            <p><strong>Distance:</strong> ${haversineDistance([marker.location.lng, marker.location.lat], [userLocation.coords.longitude, userLocation.coords.latitude]).toFixed(2)} km</p>
-        `;
-            Object.assign(description.style, {
-                marginBottom: '20px',
-                lineHeight: '1.6',
-                fontSize: '16px'
-            });
-            contentWrapper.appendChild(description);
-
-            const openUrlButton = document.createElement('button');
-            openUrlButton.innerText = `Perform ${marker.form}`;
-            Object.assign(openUrlButton.style, {
-                backgroundColor: '#e55400',
-                color: 'white',
-                border: 'none',
-                padding: '12px 24px',
-                borderRadius: '5px',
-                cursor: 'pointer',
-                fontSize: '16px',
-                transition: 'background-color 0.3s',
-                width: '100%',
-                marginBottom: '20px'
-            });
-            openUrlButton.onmouseover = () => openUrlButton.style.backgroundColor = '#aa3f00';
-            openUrlButton.onmouseout = () => openUrlButton.style.backgroundColor = '#e55400';
-            openUrlButton.onclick = () => window.open(marker.url, '_blank');
-            modal.appendChild(openUrlButton);
-
-            document.body.appendChild(modal);
-        }
+    navigator.geolocation.getCurrentPosition(async (position) => {
+        userLocation = position;
+        updateMarkers()
 
     }, (err) => {
         console.error('Error retrieving location', err);
