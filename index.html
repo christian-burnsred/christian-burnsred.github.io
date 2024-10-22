@@ -35,6 +35,7 @@
             left: 0;
             position: fixed;
             z-index: 1001;
+            height:60px;
         }
 
         .header h1 {
@@ -54,6 +55,7 @@
         .user-name {
             display: flex;
             align-items: center;
+            z-index: 9999;
         }
 
         .chevron {
@@ -75,7 +77,7 @@
             border-radius: 4px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             display: none;
-            z-index: 1002;
+            z-index: 9999;
         }
 
         .dropdown-menu.active {
@@ -122,25 +124,28 @@
             padding: 10px 0;
             z-index: 1000;
             box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            height: 60px;
         }
 
         .nav-item {
             flex: 1;
             text-align: center;
-            padding: 12px 10px;
             cursor: pointer;
             font-size: 16px;
             color: #ffffff;
-            transition: background-color 0.3s, color 0.3s;
             border-radius: 8px;
-            margin: 0 5px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            height: 100%;
         }
 
-        .nav-item:hover {
-            background-color: rgba(255, 255, 255, 0.2);
+        .separator {
+            height: 100%;
+            background-color: dimgrey;
+            margin: 10px 0;
+            width: 2px;
+            align-self: center;
         }
 
         @media screen and (max-width: 480px) {
@@ -256,8 +261,10 @@
             background-color: #aa3f00;
         }
     </style>
-  <script type="module" crossorigin src="/assets/index-jzwU1sXz.js"></script>
+  <script type="module" crossorigin src="/assets/index-DUtkdUZP.js"></script>
 </head>
+
+<div id="toast-container" style="position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 10000;"></div>
 
 <div class="header" id="header">
     <h1>BHP AR</h1>
@@ -312,10 +319,13 @@
     </form>
 </div>
 
+<!--<div class="separator"></div>-->
+
 <nav class="nav-bar">
     <div class="nav-item" onclick="window.open('https://christian-burnsred.github.io/qr-generator/', '_blank');">
         QR Generator
     </div>
+    <div class="separator"></div>
     <div class="nav-item"
          onclick="window.open('http://bhp-qr-code-evolve-platform-prototype1.burnsred.com.au/?params=eyJvcGVyYXRpb24iOiIiLCJsZWFkT2JzZXJ2ZXIiOiIiLCJyaXNrU2VsZWN0ZWQiOiIiLCJjb250cm9sRnJhbWV3b3JrU2VsZWN0ZWQiOiIiLCJvcGVyYXRpbmdDb250ZXh0cyI6IiIsImVxdWlwbWVudFNlbGVjdGVkIjoiIn0%3D','_blank');">
         'Flex' App
