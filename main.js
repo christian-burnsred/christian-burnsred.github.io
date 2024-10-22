@@ -450,6 +450,12 @@ window.onload = async () => {
     }
 
     async function updateMarkers() {
+        // Remove all existing markers
+        const existingMarkers = document.querySelectorAll('a-entity[id^="place-"]');
+        existingMarkers.forEach(marker => {
+            marker.parentNode.removeChild(marker);
+        });
+
         markers.forEach((marker, index) => {
             const placeEntity = document.createElement('a-entity');
             placeEntity.setAttribute('gps-entity-place', `latitude: ${marker.location.lat}; longitude: ${marker.location.lng};`);
@@ -475,23 +481,72 @@ window.onload = async () => {
                 }
             }
 
+            // Create container for bobbing animation
+            const modelContainer = document.createElement('a-entity');
+            modelContainer.setAttribute('animation__bob', {
+                property: 'position',
+                dir: 'alternate',
+                dur: 2000,
+                from: '0 0 0',
+                to: '0 0.3 0',
+                loop: true,
+                easing: 'easeInOutSine'
+            });
+
             // 3D model that always faces the camera
             const placeModel = document.createElement('a-gltf-model');
             placeModel.setAttribute('src', markerType);
             placeModel.setAttribute('scale', '0.1 0.1 0.1');
-            placeModel.setAttribute('look-at', '[gps-camera]');
             placeModel.setAttribute('class', 'clickable');
-            placeEntity.appendChild(placeModel);
+
+            // Set up rotation animation using JavaScript
+            let rotationAngle = 0;
+            let rotationDirection = 1;
+            const maxRotation = Math.PI / 16; // About 11.25 degrees
+            const rotationSpeed = 0.005;
+
+            // Wait for model to load before starting rotation
+            placeModel.addEventListener('model-loaded', () => {
+                function animateRotation() {
+                    rotationAngle += rotationSpeed * rotationDirection;
+
+                    // Change direction when reaching limits
+                    if (Math.abs(rotationAngle) >= maxRotation) {
+                        rotationDirection *= -1;
+                    }
+
+                    // Apply rotation
+                    placeModel.object3D.rotation.y = rotationAngle;
+
+                    // Continue animation loop
+                    requestAnimationFrame(animateRotation);
+                }
+
+                // Start the animation loop
+                animateRotation();
+            });
+
+            modelContainer.appendChild(placeModel);
+            placeEntity.appendChild(modelContainer);
 
             // Text for Equipment and Distance
             const textEntity = document.createElement('a-text');
             const distance = haversineDistance([marker.location.lng, marker.location.lat], [userLocation.coords.longitude, userLocation.coords.latitude]).toFixed(2);
-            textEntity.setAttribute('value', `${marker.equipment}\n${distance} km`);
+            textEntity.setAttribute('value', `${marker.form}\n${marker.equipment}\n${distance} km`);
             textEntity.setAttribute('color', textColour);
             textEntity.setAttribute('align', 'center');
             textEntity.setAttribute('position', '0 1.5 0');
             textEntity.setAttribute('scale', '1.5 1.5 1.5');
             textEntity.setAttribute('look-at', '[gps-camera]');
+            textEntity.setAttribute('animation__bob', {
+                property: 'position',
+                dir: 'alternate',
+                dur: 2000,
+                from: '0 1.5 0',
+                to: '0 1.8 0',
+                loop: true,
+                easing: 'easeInOutSine'
+            });
             placeEntity.appendChild(textEntity);
 
             // Invisible hitbox for better click detection
@@ -500,6 +555,15 @@ window.onload = async () => {
             hitbox.setAttribute('material', `opacity: 0.0`);
             hitbox.setAttribute('scale', '2 2 0');
             hitbox.setAttribute('position', '0 0 0');
+            hitbox.setAttribute('animation__bob', {
+                property: 'position',
+                dir: 'alternate',
+                dur: 2000,
+                from: '0 0 0',
+                to: '0 0.15 0',
+                loop: true,
+                easing: 'easeInOutSine'
+            });
             placeEntity.appendChild(hitbox);
 
             // Add click listener
