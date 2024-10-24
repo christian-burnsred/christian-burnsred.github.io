@@ -177,19 +177,6 @@ window.onload = async () => {
             // Clear canvas
             ctx.clearRect(0, 0, width, height);
 
-            // Draw outer circle
-            ctx.beginPath();
-            ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-
-            // Draw inner circle
-            ctx.beginPath();
-            ctx.arc(center.x, center.y, radius - 10, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-            ctx.fill();
-
             // Draw cardinal points
             ctx.save();
             ctx.translate(center.x, center.y);
@@ -221,13 +208,7 @@ window.onload = async () => {
 
             // N
             ctx.fillStyle = '#e55400';
-            ctx.fillText('N', 0, -radius + 25);
-
-            // Other cardinal points
-            ctx.fillStyle = 'white';
-            ctx.fillText('S', 0, radius - 25);
-            ctx.fillText('E', radius - 25, 0);
-            ctx.fillText('W', -radius + 25, 0);
+            ctx.fillText('N', 0, -radius + 5);
 
             ctx.restore();
         }
@@ -252,14 +233,15 @@ window.onload = async () => {
         drawCompass(0);
 
         // Add manual controls for testing
-        const testControls = document.createElement('div');
-        testControls.innerHTML = `
-        <div style="position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 4px; z-index: 1000;">
-            <button onclick="window.testCompassRotation(-10)">←</button>
-            <button onclick="window.testCompassRotation(10)">→</button>
-        </div>
-    `;
-        document.body.appendChild(testControls);
+        // TODO - remove
+    //     const testControls = document.createElement('div');
+    //     testControls.innerHTML = `
+    //     <div style="position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 4px; z-index: 1000;">
+    //         <button onclick="window.testCompassRotation(-10)">←</button>
+    //         <button onclick="window.testCompassRotation(10)">→</button>
+    //     </div>
+    // `;
+    //     document.body.appendChild(testControls);
 
         // Add test rotation function to window
         window.testCompassRotation = function(degrees) {
@@ -370,9 +352,14 @@ window.onload = async () => {
         showAssignedModal();
     });
 
-    // Event listener for closing the assigned items modal
     document.getElementById('closeAssignedModal').addEventListener('click', function () {
         document.getElementById('assigned-modal').style.display = 'none';
+
+        // Remove orientation event listeners
+        if (window.DeviceOrientationEvent) {
+            window.removeEventListener('deviceorientationabsolute', handleOrientation);
+            window.removeEventListener('deviceorientation', handleOrientation);
+        }
     });
 
     function showToast(message, colour) {
@@ -506,11 +493,65 @@ window.onload = async () => {
 
         const assignedModal = document.getElementById('assigned-modal');
         const assignedItemsList = document.getElementById('assignedItemsList');
-        assignedItemsList.innerHTML = ''; // Clear previous content
+        assignedItemsList.innerHTML = '';
+
+        function createArrowSVG() {
+            return `
+            <svg viewBox="0 0 24 24">
+                <path d="M12 2L18 8H6L12 2Z" 
+                      fill="#e55400" 
+                      stroke="#e55400" 
+                      stroke-width="2"/>
+            </svg>
+        `;
+        }
+
+        function calculateBearing(userLat, userLng, targetLat, targetLng) {
+            const toRad = deg => deg * Math.PI / 180;
+            const toDeg = rad => rad * 180 / Math.PI;
+
+            const dLon = toRad(targetLng - userLng);
+            const lat1 = toRad(userLat);
+            const lat2 = toRad(targetLat);
+
+            const y = Math.sin(dLon) * Math.cos(lat2);
+            const x = Math.cos(lat1) * Math.sin(lat2) -
+                Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+
+            return (toDeg(Math.atan2(y, x)) + 360) % 360;
+        }
+
+        function updateArrows() {
+            const arrows = document.querySelectorAll('.direction-arrow');
+            arrows.forEach(arrow => {
+                const targetLat = parseFloat(arrow.dataset.targetLat);
+                const targetLng = parseFloat(arrow.dataset.targetLng);
+                const bearing = calculateBearing(
+                    userLocation.coords.latitude,
+                    userLocation.coords.longitude,
+                    targetLat,
+                    targetLng
+                );
+
+                // Get device heading
+                let heading = window.deviceOrientation?.alpha || 0;
+                if (window.deviceOrientation?.webkitCompassHeading !== undefined) {
+                    heading = window.deviceOrientation.webkitCompassHeading;
+                } else if (window.deviceOrientation?.alpha !== undefined) {
+                    heading = 360 - window.deviceOrientation.alpha;
+                }
+
+                // Calculate final rotation
+                const rotation = (bearing - heading + 360) % 360;
+                arrow.style.transform = `rotate(${rotation}deg)`;
+            });
+        }
 
         try {
-            const isAssignedMarkers = markers.filter(marker => marker.assignee)
-            const assignedMarkers = isAssignedMarkers.filter(marker => marker.assignee.username === currentUser.username);
+            const isAssignedMarkers = markers.filter(marker => marker.assignee);
+            const assignedMarkers = isAssignedMarkers.filter(marker =>
+                marker.assignee.username === currentUser.username
+            );
 
             if (assignedMarkers.length === 0) {
                 assignedItemsList.innerHTML = '<p>No assigned actions.</p>';
@@ -518,23 +559,66 @@ window.onload = async () => {
                 assignedMarkers.forEach(marker => {
                     const itemElement = document.createElement('div');
                     itemElement.className = 'assigned-item';
+
+                    // Create flex container for content and arrow
                     itemElement.innerHTML = `
-                    <h3>${marker.equipment} - ${marker.form}</h3>
-                    <p><strong>Operation:</strong> ${marker.operation}</p>
-                    <p><strong>Control:</strong> ${marker.control}</p>
-                    <p><strong>Location</strong></br>
-                        &emsp;<strong>Lat:</strong> ${marker.location.lat}</br>
-                        &emsp;<strong>Lng:</strong> ${marker.location.lng}</p>
-                    <p><strong>Distance:</strong> ${haversineDistance([marker.location.lng, marker.location.lat], [userLocation.coords.longitude, userLocation.coords.latitude]).toFixed(2)} km</p>
-                    <button class="view-details-btn" data-marker-id="${marker.id}">View Details</button>
+                    <div style="display: flex; align-items: start; justify-content: space-between;">
+                        <div style="flex-grow: 1;">
+                            <h3>${marker.equipment} - ${marker.form}</h3>
+                            <p><strong>Operation:</strong> ${marker.operation}</p>
+                            <p><strong>Control:</strong> ${marker.control}</p>
+                            <p><strong>Location</strong></br>
+                                &emsp;<strong>Lat:</strong> ${marker.location.lat}</br>
+                                &emsp;<strong>Lng:</strong> ${marker.location.lng}</p>
+                            <p><strong>Distance:</strong> ${haversineDistance(
+                        [marker.location.lng, marker.location.lat],
+                        [userLocation.coords.longitude, userLocation.coords.latitude]
+                    ).toFixed(2)} km</p>
+                            <button class="view-details-btn" data-marker-id="${marker.id}">View Details</button>
+                        </div>
+                        <div class="direction-arrow" 
+                             data-target-lat="${marker.location.lat}"
+                             data-target-lng="${marker.location.lng}">
+                            ${createArrowSVG()}
+                        </div>
+                    </div>
                 `;
+
                     assignedItemsList.appendChild(itemElement);
                 });
 
+                // Set up device orientation handling
+                window.deviceOrientation = {};
+
+                function handleOrientation(event) {
+                    window.deviceOrientation = event;
+                    updateArrows();
+                }
+
+                if (window.DeviceOrientationEvent) {
+                    if ('ondeviceorientationabsolute' in window) {
+                        window.addEventListener('deviceorientationabsolute', handleOrientation);
+                    } else {
+                        window.addEventListener('deviceorientation', handleOrientation);
+                    }
+
+                    // Request permission for iOS devices
+                    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                        DeviceOrientationEvent.requestPermission()
+                            .then(permission => {
+                                if (permission === 'granted') {
+                                    window.addEventListener('deviceorientation', handleOrientation);
+                                }
+                            })
+                            .catch(console.error);
+                    }
+                }
+
+                // Initial arrow update
+                updateArrows();
             }
 
             assignedModal.style.display = 'flex';
-            console.log(assignedModal.style.zIndex);
         } catch (error) {
             console.error('Error fetching assigned markers:', error);
             assignedItemsList.innerHTML = '<p>Error loading assigned actions. Please try again later.</p>';
