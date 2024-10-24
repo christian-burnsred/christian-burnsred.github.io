@@ -53,6 +53,7 @@ window.showModal = function (marker) {
         padding: '20px',
         boxSizing: 'border-box',
         fontFamily: 'Arial, sans-serif',
+        width: "100vw",
         color: '#333'
     });
 
