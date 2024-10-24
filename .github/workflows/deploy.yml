@@ -3,7 +3,7 @@ name: Deploy Vite App to GitHub Pages
 on:
   push:
     branches:
-      - main  # This workflow will run when pushing to the 'main' branch
+      - main
 
 jobs:
   build:
@@ -27,10 +27,11 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{secrets.VITE_FIREBASE_APP_ID}}
           VITE_FIREBASE_MEASURE_ID: ${{secrets.VITE_FIREBASE_MEASURE_ID}}
           VITE_FIREBASE_SENDER_ID: ${{secrets.VITE_FIREBASE_SENDER_ID}}
-        run: npm run build  # This should build the static files in the 'dist' folder
+          VITE_MAPBOX_TOKEN: ${{secrets.VITE_MAPBOX_TOKEN}}
+        run: npm run build
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}  # This is automatically provided by GitHub Actions
-          publish_dir: ./dist  # The 'dist' directory where Vite outputs your built site
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
