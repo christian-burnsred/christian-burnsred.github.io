@@ -157,21 +157,21 @@ window.onload = async () => {
     function initCompass() {
         const canvas = document.getElementById('compass');
         const ctx = canvas.getContext('2d')
-        const debugElement = document.getElementById('compass-debug');
+        // const debugElement = document.getElementById('compass-debug');
         let heading = 0;
 
         function drawCompass(heading) {
             const width = canvas.width;
             const height = canvas.height;
-            const center = { x: width / 2, y: height / 2 };
+            const center = {x: width / 2, y: height / 2};
             const radius = Math.min(width, height) / 2 - 10;
 
-            // Update debug info
-            debugElement.innerHTML = `
-                Heading: ${heading.toFixed(1)}°
-                <br>Sensor: ${window.DeviceOrientationEvent ? 'Available' : 'Not Available'}
-                <br>Absolute: ${'ondeviceorientationabsolute' in window ? 'Yes' : 'No'}
-            `;
+            // // Update debug info
+            // debugElement.innerHTML = `
+            //     Heading: ${heading.toFixed(1)}°
+            //     <br>Sensor: ${window.DeviceOrientationEvent ? 'Available' : 'Not Available'}
+            //     <br>Absolute: ${'ondeviceorientationabsolute' in window ? 'Yes' : 'No'}
+            // `;
 
 
             // Clear canvas
@@ -232,19 +232,19 @@ window.onload = async () => {
         // Initial draw
         drawCompass(0);
 
-        // Add manual controls for testing
-        // TODO - remove
-    //     const testControls = document.createElement('div');
-    //     testControls.innerHTML = `
-    //     <div style="position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 4px; z-index: 1000;">
-    //         <button onclick="window.testCompassRotation(-10)">←</button>
-    //         <button onclick="window.testCompassRotation(10)">→</button>
-    //     </div>
-    // `;
-    //     document.body.appendChild(testControls);
+        // // Add manual controls for testing
+        // // TODO - manual testing controls
+        // const testControls = document.createElement('div');
+        // testControls.innerHTML = `
+        //     <div style="position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 4px; z-index: 1000;">
+        //         <button onclick="window.testCompassRotation(-10)">←</button>
+        //         <button onclick="window.testCompassRotation(10)">→</button>
+        //     </div>
+        // `;
+        // document.body.appendChild(testControls);
 
         // Add test rotation function to window
-        window.testCompassRotation = function(degrees) {
+        window.testCompassRotation = function (degrees) {
             heading = (heading + degrees) % 360;
             if (heading < 0) heading += 360;
             drawCompass(heading);
@@ -468,8 +468,11 @@ window.onload = async () => {
         assignedNotification.setAttribute('id', 'assignedNotification');
         assignedNotification.textContent = noAssignedActions;
         assignedNotification.style.position = 'absolute';
-        assignedNotification.style.top = '18px';
-        assignedNotification.style.right = '4px';
+
+        // Center align notification vertically on the right side of the button
+        assignedNotification.style.top = '50%';
+        assignedNotification.style.transform = 'translateY(-50%)';
+        assignedNotification.style.right = '10px';
         assignedNotification.style.backgroundColor = '#ff0000';
         assignedNotification.style.color = '#fff';
         assignedNotification.style.borderRadius = '50%';
@@ -820,6 +823,21 @@ window.onload = async () => {
 
     async function updateMap() {
         let isMapExpanded = false;
+        let currentPopup = null;
+
+        // Add a solid blue dot for the user's location
+        const userMarkerElement = document.createElement('div');
+        userMarkerElement.className = 'user-marker';
+        userMarkerElement.style.backgroundColor = 'blue'; // Solid blue color
+        userMarkerElement.style.width = '15px'; // Adjust size
+        userMarkerElement.style.height = '15px'; // Adjust size
+        userMarkerElement.style.borderRadius = '50%'; // Make it circular
+        userMarkerElement.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.9)';
+
+        // Create the user marker and add it to the map
+        new mapboxgl.Marker(userMarkerElement)
+            .setLngLat([userLocation.coords.longitude, userLocation.coords.latitude])
+            .addTo(map);
 
         // Add markers to the map with popups
         markers.forEach(marker => {
@@ -828,17 +846,17 @@ window.onload = async () => {
                 closeButton: false,
                 closeOnClick: true
             }).setHTML(`
-                <div style="padding: 10px;">
-                    <h3 style="margin: 0 0 5px 0;">${marker.equipment} - ${marker.form}</h3>
-                    <p style="margin: 0;"><strong>Distance:</strong> 
-                        ${haversineDistance(
+            <div style="padding: 10px;">
+                <h3 style="margin: 0 0 5px 0;">${marker.equipment} - ${marker.form}</h3>
+                <p style="margin: 0;"><strong>Distance:</strong> 
+                    ${haversineDistance(
                 [marker.location.lng, marker.location.lat],
                 [userLocation.coords.longitude, userLocation.coords.latitude]
             ).toFixed(2)} km
-                    </p>
-                    <button class="view-details-btn" data-marker-id="${marker.id}">View Details</button>
-                </div>
-            `);
+                </p>
+                <button class="view-details-btn" data-marker-id="${marker.id}">View Details</button>
+            </div>
+        `);
 
             // Create marker
             let mapMarker;
@@ -874,6 +892,10 @@ window.onload = async () => {
                     return;
                 }
                 // Show the popup and trigger the modal
+                if (currentPopup){
+                    currentPopup.remove();
+                }
+                currentPopup = popup;
                 popup.addTo(map);
             });
         });
@@ -884,9 +906,8 @@ window.onload = async () => {
 
         // Style the close button
         closeButton.style.position = 'absolute';
-        closeButton.style.top = '51vh';
+        closeButton.style.top = 'calc(100vh - 60px - 40vh)';
         closeButton.style.right = '2vw';
-        // closeButton.style.zIndex = '10000';
         closeButton.style.padding = '8px';
         closeButton.style.border = 'none';
         closeButton.style.borderRadius = '4px';
@@ -894,7 +915,7 @@ window.onload = async () => {
         closeButton.style.display = 'none';
         closeButton.innerHTML = '<i class="bi bi-arrows-angle-contract"></i>';
 
-        /// Toggle map expansion
+        // Toggle map expansion
         mapDiv.addEventListener('click', () => {
             if (!isMapExpanded) {
                 mapDiv.classList.add('expanded');
@@ -910,6 +931,12 @@ window.onload = async () => {
             mapDiv.classList.remove('expanded');
             closeButton.style.display = 'none';
             isMapExpanded = false;
+
+            if (currentPopup) {
+                currentPopup.remove();
+                currentPopup = null; // Reset the popup reference
+            }
+
             map.resize();
         });
     }
@@ -924,7 +951,7 @@ window.onload = async () => {
             container: 'map',
             style: 'mapbox://styles/mapbox/streets-v12',
             center: [userLocation.coords.longitude, userLocation.coords.latitude], // Initial map center
-            zoom: 13 // Initial zoom level
+            zoom: 15 // Initial zoom level
         });
 
         updateMap()
