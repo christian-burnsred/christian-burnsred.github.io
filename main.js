@@ -154,6 +154,160 @@ window.onload = async () => {
     const assignees = collection(db, "assignees");
     markers = await fetchMarkers()
 
+    function initCompass() {
+        const canvas = document.getElementById('compass');
+        const ctx = canvas.getContext('2d')
+        const debugElement = document.getElementById('compass-debug');
+        let heading = 0;
+
+        function drawCompass(heading) {
+            const width = canvas.width;
+            const height = canvas.height;
+            const center = { x: width / 2, y: height / 2 };
+            const radius = Math.min(width, height) / 2 - 10;
+
+            // Update debug info
+            debugElement.innerHTML = `
+                Heading: ${heading.toFixed(1)}°
+                <br>Sensor: ${window.DeviceOrientationEvent ? 'Available' : 'Not Available'}
+                <br>Absolute: ${'ondeviceorientationabsolute' in window ? 'Yes' : 'No'}
+            `;
+
+
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+
+            // Draw outer circle
+            ctx.beginPath();
+            ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Draw inner circle
+            ctx.beginPath();
+            ctx.arc(center.x, center.y, radius - 10, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            ctx.fill();
+
+            // Draw cardinal points
+            ctx.save();
+            ctx.translate(center.x, center.y);
+            ctx.rotate(-heading * Math.PI / 180);
+
+            // North pointer (red)
+            ctx.beginPath();
+            ctx.moveTo(0, -radius + 15);
+            ctx.lineTo(-8, 0);
+            ctx.lineTo(8, 0);
+            ctx.closePath();
+            ctx.fillStyle = '#e55400';
+            ctx.fill();
+
+            // South pointer (white)
+            ctx.beginPath();
+            ctx.moveTo(0, radius - 15);
+            ctx.lineTo(-6, 0);
+            ctx.lineTo(6, 0);
+            ctx.closePath();
+            ctx.fillStyle = 'white';
+            ctx.fill();
+
+            // Draw cardinal letters
+            ctx.fillStyle = 'white';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // N
+            ctx.fillStyle = '#e55400';
+            ctx.fillText('N', 0, -radius + 25);
+
+            // Other cardinal points
+            ctx.fillStyle = 'white';
+            ctx.fillText('S', 0, radius - 25);
+            ctx.fillText('E', radius - 25, 0);
+            ctx.fillText('W', -radius + 25, 0);
+
+            ctx.restore();
+        }
+
+        function handleOrientationAbsolute(event) {
+            heading = event.alpha || 0;
+            drawCompass(heading);
+        }
+
+        function handleOrientation(event) {
+            if (event.webkitCompassHeading) {
+                // iOS devices
+                heading = event.webkitCompassHeading;
+            } else {
+                // Android devices
+                heading = 360 - event.alpha;
+            }
+            drawCompass(heading);
+        }
+
+        // Initial draw
+        drawCompass(0);
+
+        // Add manual controls for testing
+        const testControls = document.createElement('div');
+        testControls.innerHTML = `
+        <div style="position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 4px; z-index: 1000;">
+            <button onclick="window.testCompassRotation(-10)">←</button>
+            <button onclick="window.testCompassRotation(10)">→</button>
+        </div>
+    `;
+        document.body.appendChild(testControls);
+
+        // Add test rotation function to window
+        window.testCompassRotation = function(degrees) {
+            heading = (heading + degrees) % 360;
+            if (heading < 0) heading += 360;
+            drawCompass(heading);
+        };
+
+        // Check if device orientation is supported
+        if (window.DeviceOrientationEvent) {
+            if ('ondeviceorientationabsolute' in window) {
+                console.log('Absolute orientation is supported');
+                window.addEventListener('deviceorientationabsolute', handleOrientationAbsolute);
+            } else {
+                console.log('Using relative orientation');
+                window.addEventListener('deviceorientation', handleOrientation);
+            }
+
+            // Request permission for iOS devices
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                document.getElementById('compass-container').addEventListener('click', async () => {
+                    try {
+                        const permission = await DeviceOrientationEvent.requestPermission();
+                        if (permission === 'granted') {
+                            if ('ondeviceorientationabsolute' in window) {
+                                window.addEventListener('deviceorientationabsolute', handleOrientationAbsolute);
+                            } else {
+                                window.addEventListener('deviceorientation', handleOrientation);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error requesting device orientation permission:', error);
+                    }
+                });
+            }
+        } else {
+            console.log('Device orientation not supported');
+            document.getElementById('compass-container').style.display = 'none';
+        }
+
+        // Add resize handler
+        window.addEventListener('resize', () => {
+            drawCompass(heading);
+        });
+    }
+
+    initCompass();
+
     async function fetchUsers() {
         try {
             const users = await getDocs(assignees);
