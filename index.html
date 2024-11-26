@@ -198,7 +198,7 @@
             align-items: stretch;
             padding: 20px;
             box-sizing: border-box;
-            z-index: 1000;
+            z-index: 9000;
             font-family: Arial, sans-serif;
             color: #333;
             overflow-y: auto;
@@ -371,6 +371,24 @@
                 style="background-color: #e55400; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; width: 100%;">
             Login
         </button>
+        <table style="padding-top: 10px; width: 100%;">
+            <tr>
+                <th style="text-align: left;">username</th>
+                <th style="text-align: left;">password</th>
+            </tr>
+            <tr>
+                <td>jamesbond</td>
+                <td>a</td>
+            </tr>
+            <tr>
+                <td>jasonbourne</td>
+                <td>a</td>
+            </tr>
+            <tr>
+                <td>johnwick</td>
+                <td>a</td>
+            </tr>
+        </table>
     </form>
 </div>
 
@@ -379,25 +397,27 @@
 
 <div id="compass-container" style="position: fixed; top: 60px; left: 0px; width: 100px; height: 100px; z-index: 999;">
     <canvas id="compass" width="100" height="100"></canvas>
-<!--    <div id="compass-debug" style="-->
-<!--        position: absolute;-->
-<!--        top: 110px;-->
-<!--        background: rgba(0, 0, 0, 0.7);-->
-<!--        color: white;-->
-<!--        padding: 5px;-->
-<!--        border-radius: 4px;-->
-<!--        font-size: 12px;-->
-<!--        width: 150px;-->
-<!--    "></div>-->
+    <!--    <div id="compass-debug" style="-->
+    <!--        position: absolute;-->
+    <!--        top: 110px;-->
+    <!--        background: rgba(0, 0, 0, 0.7);-->
+    <!--        color: white;-->
+    <!--        padding: 5px;-->
+    <!--        border-radius: 4px;-->
+    <!--        font-size: 12px;-->
+    <!--        width: 150px;-->
+    <!--    "></div>-->
 </div>
 
 <nav class="nav-bar">
-    <div class="nav-item" onclick="window.open('https://christian-burnsred.github.io/qr-generator/', '_blank');">
+    <!--TODO - Change URL -->
+    <div class="nav-item"
+         onclick="window.open('https://bhp-qr-code-gen-evolve-platform-prototype1.burnsred.com.au/', '_blank');">
         QR Generator
     </div>
     <div class="separator"></div>
     <div class="nav-item"
-         onclick="window.open('http://bhp-qr-code-evolve-platform-prototype1.burnsred.com.au/?params=eyJvcGVyYXRpb24iOiIiLCJsZWFkT2JzZXJ2ZXIiOiIiLCJyaXNrU2VsZWN0ZWQiOiIiLCJjb250cm9sRnJhbWV3b3JrU2VsZWN0ZWQiOiIiLCJvcGVyYXRpbmdDb250ZXh0cyI6IiIsImVxdWlwbWVudFNlbGVjdGVkIjoiIn0%3D','_blank');">
+         onclick="window.open('http://bhp-qr-code-evolve-platform-prototype1.burnsred.com.au/','_blank');">
         'Flex' App
     </div>
 </nav>

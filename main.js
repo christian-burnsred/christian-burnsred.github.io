@@ -46,7 +46,7 @@ window.showModal = function (marker) {
         bottom: '60px',
         left: '0',
         backgroundColor: 'rgba(255, 255, 255, 1)',
-        zIndex: '1000',
+        zIndex: '9000',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'stretch',
